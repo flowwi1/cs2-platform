@@ -5,7 +5,7 @@ import os
 import time
 
 app = Flask(__name__)
-app.secret_key = "super-secret-key"
+app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key")
 DB = "database.db"
 
 # ================== DATABASE ==================
@@ -15,10 +15,9 @@ def get_db():
     return db
 
 def init_db():
-    """Створює всі таблиці, якщо їх немає"""
     with get_db() as db:
         c = db.cursor()
-        # Таблиця користувачів
+        # Users table
         c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
@@ -27,21 +26,21 @@ def init_db():
             avatar TEXT DEFAULT '/static/default.png'
         )
         """)
-        # Таблиця друзів
+        # Friends table
         c.execute("""
         CREATE TABLE IF NOT EXISTS friends (
             user TEXT,
             friend TEXT
         )
         """)
-        # Таблиця заявок у друзі
+        # Friend requests table
         c.execute("""
         CREATE TABLE IF NOT EXISTS friend_requests (
             sender TEXT,
             receiver TEXT
         )
         """)
-        # Таблиці команд
+        # Teams
         c.execute("""
         CREATE TABLE IF NOT EXISTS teams (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,7 +54,7 @@ def init_db():
             username TEXT
         )
         """)
-        # Таблиці черги та матчів
+        # Queue & matches
         c.execute("""
         CREATE TABLE IF NOT EXISTS queue (
             username TEXT,
@@ -79,37 +78,65 @@ init_db()
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        u = request.form.get("username")
-        p = request.form.get("password")
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-        if not u or not p:
+        if not username or not password:
             return render_template("login.html", message="Введіть логін і пароль")
 
         with get_db() as db:
             c = db.cursor()
-            c.execute("SELECT password FROM users WHERE username=?", (u,))
+            c.execute("SELECT password FROM users WHERE username=?", (username,))
             user = c.fetchone()
 
             if not user:
-                # Створення нового користувача
+                # Register new user
                 c.execute("INSERT INTO users (username, password) VALUES (?, ?)",
-                          (u, generate_password_hash(p)))
+                          (username, generate_password_hash(password)))
                 db.commit()
-                session["user"] = u
-                return redirect("/")
-            elif check_password_hash(user["password"], p):
-                session["user"] = u
-                return redirect("/")
+                session["user"] = username
+                return redirect("/game")
+            elif check_password_hash(user["password"], password):
+                session["user"] = username
+                return redirect("/game")
             else:
                 return render_template("login.html", message="Неправильний пароль")
     return render_template("login.html")
-
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
+# ================== GAME ==================
+@app.route("/game")
+def game():
+    if "user" not in session:
+        return redirect("/login")
+    user = session["user"]
+    with get_db() as db:
+        c = db.cursor()
+        c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
+        row = c.fetchone()
+        elo = row["elo"] if row else 1000
+        avatar = row["avatar"] if row else "/static/default.png"
+    return render_template("game.html", username=user, elo=elo, avatar=avatar)
+
+# ================== QUEUE ==================
+@app.route("/queue")
+def queue():
+    if "user" not in session:
+        return redirect("/login")
+    user = session["user"]
+    with get_db() as db:
+        c = db.cursor()
+        c.execute("SELECT elo FROM users WHERE username=?", (user,))
+        row = c.fetchone()
+        elo = row["elo"] if row else 1000
+        c.execute("INSERT OR REPLACE INTO queue (username, elo, joined) VALUES (?, ?, ?)",
+                  (user, elo, int(time.time())))
+        db.commit()
+    return "Ти доданий у чергу! (після тестів можна редирект на /matchmaking)"
 
 # ================== HOME ==================
 @app.route("/")
@@ -117,138 +144,10 @@ def home():
     if "user" not in session:
         return redirect("/login")
     user = session["user"]
-
-    with get_db() as db:
-        c = db.cursor()
-        c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
-        row = c.fetchone()
-        elo = row["elo"] if row else 1000
-        avatar = row["avatar"] if row else "/static/default.png"
-        fc = 0
-
-        # Команди користувача
-        c.execute("""
-            SELECT t.id, t.name FROM teams t
-            JOIN team_members tm ON t.id = tm.team_id
-            WHERE tm.username=?
-        """, (user,))
-        teams = c.fetchall() or []
-
-        # Друзі користувача
-        c.execute("SELECT friend FROM friends WHERE user=?", (user,))
-        friends = [f["friend"] for f in c.fetchall()] or []
-
-    return render_template("index.html", username=user, elo=elo, fc=fc, teams=teams, friends=friends, avatar=avatar)
-
-
-# ================== PROFILE ==================
-@app.route("/profile", methods=["GET", "POST"])
-def profile():
-    if "user" not in session:
-        return redirect("/login")
-    user = session["user"]
-
-    with get_db() as db:
-        c = db.cursor()
-
-        # Створення команди
-        if request.method == "POST" and "create_team" in request.form:
-            team_name = request.form.get("team_name")
-            invited_friends = request.form.getlist("invite") or []
-            if team_name:
-                c.execute("INSERT INTO teams (name, leader) VALUES (?, ?)", (team_name, user))
-                team_id = c.lastrowid
-                c.execute("INSERT INTO team_members (team_id, username) VALUES (?, ?)", (team_id, user))
-                for f in invited_friends:
-                    c.execute("INSERT INTO team_members (team_id, username) VALUES (?, ?)", (team_id, f))
-                db.commit()
-                return redirect("/profile")
-
-        # ELO та аватар
-        c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
-        row = c.fetchone()
-        elo = row["elo"] if row else 1000
-        avatar = row["avatar"] if row else "/static/default.png"
-
-        # Друзі користувача
-        c.execute("""
-            SELECT username, avatar FROM users
-            WHERE username IN (SELECT friend FROM friends WHERE user=?)
-        """, (user,))
-        friends = c.fetchall() or []
-
-        # Команди користувача
-        c.execute("""
-            SELECT t.id, t.name FROM teams t
-            JOIN team_members tm ON t.id = tm.team_id
-            WHERE tm.username=?
-        """, (user,))
-        teams = c.fetchall() or []
-
-    return render_template("profile.html", username=user, elo=elo, friends=friends, teams=teams, avatar=avatar)
-
-
-# ================== FRIENDS ==================
-@app.route("/friends", methods=["GET", "POST"])
-def friends_page():
-    if "user" not in session:
-        return redirect("/login")
-    user = session["user"]
-    message = None
-    search_result = None
-
-    with get_db() as db:
-        c = db.cursor()
-
-        if request.method == "POST":
-            # Пошук користувача
-            if "search" in request.form:
-                name = request.form.get("search_name")
-                c.execute("SELECT username FROM users WHERE username=?", (name,))
-                if not c.fetchone():
-                    message = "Користувача не знайдено"
-                elif name == user:
-                    message = "Це ти 🙂"
-                else:
-                    search_result = name
-
-            # Надіслати заявку в друзі
-            elif "add_friend" in request.form:
-                target = request.form.get("target")
-                c.execute("SELECT 1 FROM friends WHERE user=? AND friend=?", (user, target))
-                if c.fetchone():
-                    message = f"{target} вже у твоїх друзях"
-                else:
-                    c.execute("SELECT 1 FROM friend_requests WHERE sender=? AND receiver=?", (user, target))
-                    if not c.fetchone():
-                        c.execute("INSERT INTO friend_requests VALUES (?, ?)", (user, target))
-                        db.commit()
-                        message = "Заявку надіслано"
-                    else:
-                        message = "Заявка вже надіслана"
-
-            # Прийняти заявку
-            elif "accept" in request.form:
-                sender = request.form.get("sender")
-                c.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (sender, user))
-                c.execute("INSERT OR IGNORE INTO friends VALUES (?, ?)", (user, sender))
-                c.execute("INSERT OR IGNORE INTO friends VALUES (?, ?)", (sender, user))
-                db.commit()
-                message = f"Ви додали {sender} у друзі!"
-
-        # Заявки на дружбу
-        c.execute("SELECT sender FROM friend_requests WHERE receiver=?", (user,))
-        requests = [r["sender"] for r in c.fetchall()] or []
-
-        # Список друзів
-        c.execute("SELECT friend FROM friends WHERE user=?", (user,))
-        friends = [f["friend"] for f in c.fetchall()] or []
-
-    return render_template("friends.html", username=user, friends=friends, requests=requests, search_result=search_result, message=message)
-
+    return redirect("/game")
 
 # ================== RUN ==================
 if __name__ == "__main__":
-    # Використовуємо port з середовища Render, якщо він є
+    # Для Render порт читаємо з ENV
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
