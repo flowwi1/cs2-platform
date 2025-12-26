@@ -1,24 +1,26 @@
-# файл: main.py
+import os
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# Головна сторінка
-@app.route('/', methods=['GET'])
+@app.route('/')
 def home():
     return jsonify({"message": "Сервер працює!"})
 
-# Маршрут для привітання з параметром
-@app.route('/hello/<name>', methods=['GET'])
+# Приклад hello
+@app.route('/hello/<name>')
 def hello(name):
     return jsonify({"message": f"Привіт, {name}!"})
 
-# Маршрут для отримання даних через POST
+# POST з JSON
 @app.route('/data', methods=['POST'])
 def data():
-    content = request.json  # Очікуємо JSON від клієнта
+    content = request.get_json()
+    if not content:
+        return jsonify({"error": "Будь ласка, надішліть JSON"}), 400
     return jsonify({"received": content})
 
 # Запуск сервера
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))  # Render задає PORT
+    app.run(host="0.0.0.0", port=port)
