@@ -5,88 +5,57 @@
 <title>CS2 PLATFORM</title>
 <style>
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #0f172a;
-    color: white;
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:#0f172a;
+    color:white;
 }
-
 .container {
-    display: flex;
-    height: 100vh;
+    display:flex;
+    height:100vh;
 }
-
-/* Ліва частина */
-.left {
-    flex: 1;
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Аватар */
-.avatar {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    border: 2px solid #22c55e;
-    margin-bottom: 20px;
-}
-
-/* Вітання */
-.welcome h1 {
-    margin: 0;
-    color: #22c55e;
-}
-.welcome p {
-    color: #a5b4fc;
-}
-
-/* Кнопка гри */
-.play-btn {
-    margin-top: 40px;
-    padding: 25px 50px;
-    font-size: 26px;
-    border-radius: 14px;
-    background: #22c55e;
-    color: black;
-    cursor: pointer;
-    border: none;
-    transition: 0.3s;
-}
-.play-btn:hover {
-    background: #16a34a;
-    transform: scale(1.05);
-}
-
-/* Права панель */
 .right {
-    width: 60px;
-    background: #1e293b;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 20px;
-    transition: width 0.3s;
-    overflow: hidden;
+    width:60px;
+    background:#1e293b;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:20px;
+    transition:width .3s;
+    overflow:hidden;
 }
-.right:hover {
-    width: 200px;
+.right:hover { width:200px; }
+.btn {
+    padding:8px;
+    margin:5px 0;
+    width:90%;
+    background:#22c55e;
+    color:black;
+    border-radius:8px;
+    text-decoration:none;
+    text-align:center;
 }
-
-.right a {
-    margin: 6px 0;
-    width: 90%;
-    padding: 8px;
-    background: #22c55e;
-    color: black;
-    text-align: center;
-    border-radius: 8px;
-    text-decoration: none;
+.left {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:80px;
 }
-.right a:hover {
-    background: #16a34a;
+.avatar {
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    border:2px solid #22c55e;
+}
+.mode {
+    margin-top:30px;
+    background:#1e293b;
+    padding:30px 60px;
+    border-radius:14px;
+    font-size:26px;
+    color:#22c55e;
+    cursor:pointer;
 }
 </style>
 </head>
@@ -94,25 +63,22 @@ body {
 <body>
 <div class="container">
 
-    <div class="left">
-        <img src="{{ avatar }}" class="avatar" alt="avatar">
+<div class="left">
+    <img class="avatar" src="{{ avatar|default('https://i.imgur.com/8Km9tLL.png') }}">
+    <h1>Привіт, {{ username|default('User') }}</h1>
+    <p>ELO: {{ elo|default(1000) }}</p>
 
-        <div class="welcome">
-            <h1>Привіт, {{ username }}!</h1>
-            <p>ELO: {{ elo }}</p>
-        </div>
-
-        <button class="play-btn" onclick="location.href='/queue'">
-            🎮 ЗНАЙТИ МАТЧ
-        </button>
+    <div class="mode" onclick="location.href='/queue'">
+        🎮 2v2 — ЗНАЙТИ МАТЧ
     </div>
+</div>
 
-    <div class="right">
-        <a href="/">Головна</a>
-        <a href="/profile">Профіль</a>
-        <a href="/friends">Друзі</a>
-        <a href="/logout">Вихід</a>
-    </div>
+<div class="right">
+    <a href="/" class="btn">Головна</a>
+    <a href="/profile" class="btn">Профіль</a>
+    <a href="/friends" class="btn">Друзі</a>
+    <a href="/logout" class="btn">Вихід</a>
+</div>
 
 </div>
 </body>

@@ -5,78 +5,49 @@
 <title>Профіль</title>
 <style>
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #0f172a;
-    color: white;
+    background:#0f172a;
+    color:white;
+    font-family:Arial;
+    padding:40px;
 }
-
-.container {
-    max-width: 900px;
-    margin: auto;
-    padding: 40px;
-}
-
-/* Аватар */
-.avatar {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    border: 2px solid #22c55e;
-}
-
-/* Карточки */
 .card {
-    background: #1e293b;
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 20px;
-}
-
-h2, h3 {
-    color: #22c55e;
-}
-
-.friend {
-    padding: 6px 0;
-    border-bottom: 1px solid #334155;
+    background:#1e293b;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:20px;
 }
 </style>
 </head>
-
 <body>
-<div class="container">
 
-    <img src="{{ avatar }}" class="avatar" alt="avatar">
+<h2>{{ username|default('User') }}</h2>
+<p>ELO: {{ elo|default(1000) }}</p>
 
-    <h2>{{ username }}</h2>
-    <p>ELO: {{ elo }}</p>
-
-    <div class="card">
-        <h3>Мої друзі</h3>
-        {% if friends %}
-            {% for f in friends %}
-                <div class="friend">{{ f }}</div>
-            {% endfor %}
-        {% else %}
-            <p>Друзів поки немає</p>
-        {% endif %}
-    </div>
-
-    <div class="card">
-        <h3>Мої команди</h3>
-        {% if teams %}
-            {% for t in teams %}
-                <div class="friend">{{ t["name"] }}</div>
-            {% endfor %}
-        {% else %}
-            <p>Команд поки немає</p>
-        {% endif %}
-    </div>
-
-    <br>
-    <a href="/" style="color:#22c55e;">← Назад</a>
-
+<div class="card">
+<h3>Друзі</h3>
+{% if friends %}
+<ul>
+{% for f in friends %}
+<li>{{ f }}</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>Друзів немає</p>
+{% endif %}
 </div>
+
+<div class="card">
+<h3>Команди</h3>
+{% if teams %}
+<ul>
+{% for t in teams %}
+<li>{{ t.name }}</li>
+{% endfor %}
+</ul>
+{% else %}
+<p>Команд немає</p>
+{% endif %}
+</div>
+
 </body>
 </html>
