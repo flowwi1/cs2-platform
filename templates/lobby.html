@@ -1,5 +1,12 @@
-<h2>🔥 Lobby</h2>
-<p>{{ p1 }} vs {{ p2 }}</p>
+{% extends "base.html" %}
+{% block content %}
+<h2>Лобі матчу</h2>
+<p>Гравці:</p>
+<ul class="list-group mb-3">
+    <li class="list-group-item">{{ p1 }}</li>
+    <li class="list-group-item">{{ p2 }}</li>
+</ul>
 
-<a href="/result/{{ p1 }}/{{ p2 }}">🏆 {{ p1 }} WIN</a><br>
-<a href="/result/{{ p2 }}/{{ p1 }}">🏆 {{ p2 }} WIN</a>
+<p>Після готовності натисніть “Старт гри” (емуляція):</p>
+<a href="/game" class="btn btn-main">Старт гри</a>
+{% endblock %}

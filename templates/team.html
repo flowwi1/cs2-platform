@@ -1,16 +1,30 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ team_name }}</title>
-</head>
-<body>
-    <h1>Команда: {{ team_name }}</h1>
-    <p>Лідер: {{ leader }}</p>
-    <h2>Учасники:</h2>
-    <ul>
-        {% for member in members %}
-        <li>{{ member }}</li>
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h2 class="text-white mb-2">Команда: {{ team_name }}</h2>
+    <p class="text-white">Лідер: <strong>{{ leader }}</strong></p>
+
+    <hr class="border-secondary">
+
+    <h4 class="text-white mb-3">Члени команди</h4>
+    {% if members %}
+    <div class="row">
+        {% for m in members %}
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="friend-card text-center p-3 shadow-sm h-100">
+                <h5 class="card-title">{{ m }}</h5>
+                {% if m == leader %}
+                <span class="badge bg-primary mt-2">Лідер</span>
+                {% endif %}
+            </div>
+        </div>
         {% endfor %}
-    </ul>
-</body>
-</html>
+    </div>
+    {% else %}
+    <p class="text-white">У команді поки немає учасників.</p>
+    {% endif %}
+
+    <hr class="border-secondary">
+    <a href="/profile" class="btn btn-success mt-3">Назад до профілю</a>
+</div>
+{% endblock %}
