@@ -54,9 +54,18 @@ body {
     display:flex;
     flex-direction:column;
     align-items:center;
-    justify-content:center;
+    justify-content:flex-start;
     position:relative;
     padding:50px;
+}
+
+/* Аватар користувача */
+.user-avatar {
+    width:80px;
+    height:80px;
+    border-radius:50%;
+    border:2px solid #22c55e;
+    margin-bottom:20px;
 }
 
 /* Блоки режимів */
@@ -106,10 +115,12 @@ body {
 
     <!-- ЛІВА ЧАСТИНА -->
     <div class="left">
+        <img src="{{ avatar }}" alt="Аватар" class="user-avatar">
 
         <div class="welcome-box">
             <h1>Привіт, {{ username }}!</h1>
-            <p>Обери режим гри або створи команду з друзями</p>
+            <p>ELO: {{ elo }}</p>
+            <p>Обери режим гри або знайди матч</p>
         </div>
 
         <!-- 2v2 matchmaking -->
@@ -120,7 +131,6 @@ body {
         <div class="status">
             Підбір гравців за ELO • Faceit-style matchmaking
         </div>
-
     </div>
 
     <!-- ПРАВА ПАНЕЛЬ -->

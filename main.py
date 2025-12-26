@@ -15,9 +15,9 @@ def get_db():
     return db
 
 def init_db():
+    """Створює всі таблиці, якщо їх немає"""
     with get_db() as db:
         c = db.cursor()
-
         # Таблиця користувачів
         c.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -27,7 +27,6 @@ def init_db():
             avatar TEXT DEFAULT '/static/default.png'
         )
         """)
-
         # Таблиця друзів
         c.execute("""
         CREATE TABLE IF NOT EXISTS friends (
@@ -35,7 +34,6 @@ def init_db():
             friend TEXT
         )
         """)
-
         # Таблиця заявок у друзі
         c.execute("""
         CREATE TABLE IF NOT EXISTS friend_requests (
@@ -43,7 +41,6 @@ def init_db():
             receiver TEXT
         )
         """)
-
         # Таблиці команд
         c.execute("""
         CREATE TABLE IF NOT EXISTS teams (
@@ -58,7 +55,6 @@ def init_db():
             username TEXT
         )
         """)
-
         # Таблиці черги та матчів
         c.execute("""
         CREATE TABLE IF NOT EXISTS queue (
@@ -108,10 +104,12 @@ def login():
                 return render_template("login.html", message="Неправильний пароль")
     return render_template("login.html")
 
+
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
+
 
 # ================== HOME ==================
 @app.route("/")
@@ -122,7 +120,6 @@ def home():
 
     with get_db() as db:
         c = db.cursor()
-        # ELO та аватар
         c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
         row = c.fetchone()
         elo = row["elo"] if row else 1000
@@ -135,13 +132,14 @@ def home():
             JOIN team_members tm ON t.id = tm.team_id
             WHERE tm.username=?
         """, (user,))
-        teams = c.fetchall()
+        teams = c.fetchall() or []
 
         # Друзі користувача
         c.execute("SELECT friend FROM friends WHERE user=?", (user,))
-        friends = [f["friend"] for f in c.fetchall()]
+        friends = [f["friend"] for f in c.fetchall()] or []
 
     return render_template("index.html", username=user, elo=elo, fc=fc, teams=teams, friends=friends, avatar=avatar)
+
 
 # ================== PROFILE ==================
 @app.route("/profile", methods=["GET", "POST"])
@@ -156,7 +154,7 @@ def profile():
         # Створення команди
         if request.method == "POST" and "create_team" in request.form:
             team_name = request.form.get("team_name")
-            invited_friends = request.form.getlist("invite")
+            invited_friends = request.form.getlist("invite") or []
             if team_name:
                 c.execute("INSERT INTO teams (name, leader) VALUES (?, ?)", (team_name, user))
                 team_id = c.lastrowid
@@ -169,15 +167,15 @@ def profile():
         # ELO та аватар
         c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
         row = c.fetchone()
-        elo = row["elo"]
-        avatar = row["avatar"]
+        elo = row["elo"] if row else 1000
+        avatar = row["avatar"] if row else "/static/default.png"
 
-        # Друзі
+        # Друзі користувача
         c.execute("""
             SELECT username, avatar FROM users
             WHERE username IN (SELECT friend FROM friends WHERE user=?)
         """, (user,))
-        friends = c.fetchall()
+        friends = c.fetchall() or []
 
         # Команди користувача
         c.execute("""
@@ -185,9 +183,10 @@ def profile():
             JOIN team_members tm ON t.id = tm.team_id
             WHERE tm.username=?
         """, (user,))
-        teams = c.fetchall()
+        teams = c.fetchall() or []
 
     return render_template("profile.html", username=user, elo=elo, friends=friends, teams=teams, avatar=avatar)
+
 
 # ================== FRIENDS ==================
 @app.route("/friends", methods=["GET", "POST"])
@@ -239,14 +238,17 @@ def friends_page():
 
         # Заявки на дружбу
         c.execute("SELECT sender FROM friend_requests WHERE receiver=?", (user,))
-        requests = [r["sender"] for r in c.fetchall()]
+        requests = [r["sender"] for r in c.fetchall()] or []
 
         # Список друзів
         c.execute("SELECT friend FROM friends WHERE user=?", (user,))
-        friends = [f["friend"] for f in c.fetchall()]
+        friends = [f["friend"] for f in c.fetchall()] or []
 
     return render_template("friends.html", username=user, friends=friends, requests=requests, search_result=search_result, message=message)
 
+
 # ================== RUN ==================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    # Використовуємо port з середовища Render, якщо він є
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
