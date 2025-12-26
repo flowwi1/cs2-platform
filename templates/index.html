@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>CS2 PLATFORM</title>
+<style>
+body {
+    margin:0;
+    font-family:'Arial', sans-serif;
+    background:#0f172a;
+    color:white;
+}
+.container {
+    display:flex;
+    height:100vh;
+}
+
+/* Права колонка */
+.right {
+    width:60px;
+    background:#1e293b;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:20px;
+    padding-left:5px;
+    padding-right:5px;
+    box-shadow: -3px 0 5px rgba(0,0,0,0.3);
+    transition: width 0.3s;
+    overflow:hidden;
+}
+.right:hover { width:200px; }
+
+.btn {
+    padding:6px 12px;
+    margin:5px 0;
+    width:90%;
+    font-size:14px;
+    background:#22c55e;
+    border:none;
+    border-radius:8px;
+    color:black;
+    cursor:pointer;
+    text-align:center;
+    text-decoration:none;
+    transition: all 0.3s;
+}
+.btn:hover { background:#16a34a; }
+
+/* Ліва частина сторінки */
+.left {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    position:relative;
+}
+
+/* Кнопка Грати в верхньому лівому куті */
+.btn-play {
+    position:absolute;
+    top:20px;
+    left:20px;
+    padding:12px 25px;
+    font-size:18px;
+    background:#22c55e;
+    border:none;
+    border-radius:10px;
+    font-weight:bold;
+    color:black;
+    cursor:pointer;
+    transition: all 0.3s;
+}
+.btn-play:hover { background:#16a34a; transform: scale(1.05); }
+
+/* Центр сторінки */
+.welcome-box {
+    text-align:center;
+}
+.welcome-box h1 {
+    font-size:36px;
+    color:#22c55e;
+    margin-bottom:20px;
+}
+.welcome-box p {
+    font-size:18px;
+    color:#a5b4fc;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="left">
+        <a href="/game"><button class="btn-play">Грати</button></a>
+        <div class="welcome-box">
+            <h1>Привіт, {{ username }}!</h1>
+            <p>Ласкаво просимо на платформу CS2! Додавай друзів і грай у команді 2 на 2.</p>
+        </div>
+    </div>
+    <div class="right">
+        <a href="/" class="btn">Головна</a>
+        <a href="/profile" class="btn">Профіль</a>
+        <a href="/friends" class="btn">Друзі</a>
+        <a href="/logout" class="btn">Вихід</a>
+    </div>
+</div>
+</body>
+</html>

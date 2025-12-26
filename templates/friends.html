@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Друзі</title>
+</head>
+<body>
+
+<h2>👥 Друзі — {{ username }}</h2>
+
+<h3>🔍 Пошук користувачів</h3>
+<form method="POST">
+    <input type="text" name="search_name" placeholder="Нікнейм">
+    <button name="search">Пошук</button>
+</form>
+
+{% if search_result %}
+<form method="POST">
+    <input type="hidden" name="target" value="{{ search_result }}">
+    <button name="add_friend">➕ Додати {{ search_result }}</button>
+</form>
+{% endif %}
+
+{% if message %}
+<p>{{ message }}</p>
+{% endif %}
+
+<hr>
+
+<h3>📥 Заявки в друзі</h3>
+{% for req in requests %}
+<form method="POST">
+    <input type="hidden" name="sender" value="{{ req }}">
+    <button name="accept">✅ Прийняти {{ req }}</button>
+</form>
+{% else %}
+<p>Немає заявок</p>
+{% endfor %}
+
+<hr>
+
+<h3>👤 Мої друзі</h3>
+<ul>
+{% for f in friends %}
+    <li>{{ f }}</li>
+{% else %}
+    <li>Поки немає друзів</li>
+{% endfor %}
+</ul>
+
+<br>
+<a href="/">⬅ Назад</a>
+
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Профіль - CS2 PLATFORM</title>
+    <style>
+        body { margin:0; font-family: Arial; background:#0f172a; color:white; }
+        .container { display:flex; }
+        .main { flex:3; padding:50px; }
+        .sidebar { flex:1; background:#1e293b; padding:20px; display:flex; flex-direction:column; align-items:center; }
+        .btn { padding:12px 25px; background:#22c55e; color:black; border:none; border-radius:8px; font-weight:bold; margin:5px 0; width:80%; text-align:center; text-decoration:none; cursor:pointer; }
+        h1 { color:#22c55e; }
+        a { text-decoration:none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main">
+            <h1>Профіль користувача: {{ username }}</h1>
+            <p>Тут можна буде додати статистику, інформацію про геймплей тощо.</p>
+        </div>
+        <div class="sidebar">
+            <h2>{{ username }}</h2>
+            <a href="/profile" class="btn">Профіль</a>
+            <a href="/friends" class="btn">Друзі</a>
+            <a href="/logout" class="btn">Вихід</a>
+        </div>
+    </div>
+</body>
+</html>
