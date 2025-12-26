@@ -14,8 +14,6 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 20px 40px;
-    background: rgba(15,23,42,0.9);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     position: relative;
 }
 
@@ -40,17 +38,36 @@ body {
     box-shadow: 0 5px 15px rgba(0,0,0,0.5);
 }
 
-/* Права кнопка “Грати” */
-.right-button a {
+/* Права бічна панель */
+.right-panel {
+    position: fixed;
+    top: 0;
+    right: -220px;
+    width: 220px;
+    height: 100%;
+    background: #1e293b;
+    box-shadow: -4px 0 15px rgba(0,0,0,0.7);
+    transition: right 0.4s ease;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 1000;
+}
+.right-panel:hover {
+    right: 0;
+}
+.right-panel a {
     text-decoration: none;
-    padding: 12px 25px;
-    background: #facc15;
-    color: #0f172a;
+    text-align: center;
+    padding: 12px 20px;
     font-weight: bold;
+    color: #0f172a;
+    background: #facc15;
     border-radius: 10px;
     transition: all 0.3s;
 }
-.right-button a:hover {
+.right-panel a:hover {
     background: #fcd34d;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(255,255,0,0.7);
@@ -119,6 +136,11 @@ body {
 
 /* Адаптивність */
 @media(max-width: 768px){
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
     .mode-grid {
         flex-direction: column;
         gap: 20px;
@@ -127,14 +149,6 @@ body {
         width: 80%;
         padding: 30px 20px;
     }
-    .header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-    .right-button {
-        align-self: flex-end;
-    }
 }
 </style>
 
@@ -142,12 +156,13 @@ body {
     <div class="left-buttons">
         <a href="/profile">Профіль</a>
         <a href="/friends">Друзі</a>
-        <a href="/profile">Команди</a>
         <a href="/logout">Вихід</a>
     </div>
-    <div class="right-button">
-        <a href="/game">Грати</a>
-    </div>
+</div>
+
+<div class="right-panel">
+    <a href="/game">Грати</a>
+    <a href="/profile">Команди</a>
 </div>
 
 <div class="main-container">
