@@ -1,152 +1,24 @@
-{% extends "base.html" %}
-{% block content %}
-<style>
-body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #0f172a, #1e293b);
-    color: #fff;
-    overflow-x: hidden;
-}
+# файл: main.py
+from flask import Flask, jsonify, request
 
-.header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 30px;
-    background: rgba(15, 23, 42, 0.9);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-}
+app = Flask(__name__)
 
-.logo-center {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    text-align: center;
-}
+# Головна сторінка
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({"message": "Сервер працює!"})
 
-.logo-center h1 {
-    margin: 0;
-    font-size: 2rem;
-    color: #22c55e;
-    text-shadow: 0 0 10px #22c55e;
-}
+# Маршрут для привітання з параметром
+@app.route('/hello/<name>', methods=['GET'])
+def hello(name):
+    return jsonify({"message": f"Привіт, {name}!"})
 
-.logo-center .elo-info {
-    font-size: 1rem;
-    color: #e0e7ff;
-}
+# Маршрут для отримання даних через POST
+@app.route('/data', methods=['POST'])
+def data():
+    content = request.json  # Очікуємо JSON від клієнта
+    return jsonify({"received": content})
 
-.left-buttons, .right-buttons {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.btn-main, .btn-play {
-    padding: 12px 30px;
-    font-weight: bold;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.btn-play {
-    background: #facc15;
-    color: #0f172a;
-}
-
-.btn-play:hover {
-    background: #fcd34d;
-    transform: translateY(-3px);
-    box-shadow: 0 5px 15px rgba(255,255,0,0.6);
-}
-
-.btn-main {
-    background: #22c55e;
-    color: #0f172a;
-}
-
-.btn-main:hover {
-    background: #16a34a;
-    color: #fff;
-    transform: translateY(-2px);
-}
-
-.profile-panel {
-    position: fixed;
-    top: 0;
-    right: -350px;
-    width: 350px;
-    height: 100%;
-    background: #1e293b;
-    box-shadow: -4px 0 20px rgba(0,0,0,0.7);
-    padding: 20px;
-    transition: right 0.4s ease;
-    overflow-y: auto;
-    z-index: 1000;
-}
-
-.profile-panel.active {
-    right: 0;
-}
-
-.profile-panel h2 {
-    margin-top: 0;
-    color: #22c55e;
-}
-
-.profile-panel .close-btn {
-    background: #ef4444;
-    color: #fff;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    float: right;
-    border-radius: 5px;
-}
-</style>
-
-<div class="header">
-    <div class="left-buttons">
-        <a href="/game" class="btn-play">Грати</a>
-    </div>
-
-    <div class="logo-center">
-        <h1>CS2 PLATFORM</h1>
-        <div class="elo-info">ELO: {{ elo }} | FC: YOUR_FC</div>
-    </div>
-
-    <div class="right-buttons">
-        <button class="btn-main" onclick="toggleProfile()">Профіль</button>
-        <a href="/friends" class="btn-main">Друзі</a>
-        <a href="/profile" class="btn-main">Команди</a>
-        <a href="/logout" class="btn-main">Вихід</a>
-    </div>
-</div>
-
-<!-- Бічна панель профілю -->
-<div id="profilePanel" class="profile-panel">
-    <button class="close-btn" onclick="toggleProfile()">X</button>
-    <h2>{{ username }}</h2>
-    <p>ELO: {{ elo }}</p>
-    <p>Інформація про профіль...</p>
-    <hr>
-    <h4>Мої команди</h4>
-    <ul>
-        {% for team in teams %}
-        <li>{{ team[1] }}</li>
-        {% else %}
-        <li>У вас немає команд</li>
-        {% endfor %}
-    </ul>
-</div>
-
-<script>
-function toggleProfile() {
-    const panel = document.getElementById('profilePanel');
-    panel.classList.toggle('active');
-}
-</script>
-{% endblock %}
+# Запуск сервера
+if __name__ == '__main__':
+    app.run(debug=True)
