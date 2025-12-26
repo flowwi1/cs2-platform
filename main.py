@@ -2,10 +2,10 @@ from flask import Flask, render_template, redirect, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
-import time
 
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
+
 DB = "database.db"
 
 
@@ -29,42 +29,11 @@ def init_db():
         )
         """)
 
-        c.execute("""
-        CREATE TABLE IF NOT EXISTS friends (
-            user TEXT,
-            friend TEXT
-        )
-        """)
-
-        c.execute("""
-        CREATE TABLE IF NOT EXISTS friend_requests (
-            sender TEXT,
-            receiver TEXT
-        )
-        """)
-
-        c.execute("""
-        CREATE TABLE IF NOT EXISTS teams (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            leader TEXT
-        )
-        """)
-
-        c.execute("""
-        CREATE TABLE IF NOT EXISTS team_members (
-            team_id INTEGER,
-            username TEXT
-        )
-        """)
-
         db.commit()
 
 
-# ⚠️ ОБОВʼЯЗКОВО ДЛЯ RENDER
-@app.before_first_request
-def setup():
-    init_db()
+# 🔥 ВАЖЛИВО: ініціалізація БД ОДРАЗУ
+init_db()
 
 
 # ================== AUTH ==================
@@ -119,14 +88,11 @@ def home():
         c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
         row = c.fetchone()
 
-        elo = row["elo"] if row else 1000
-        avatar = row["avatar"] if row else "https://i.imgur.com/8Km9tLL.png"
-
     return render_template(
         "index.html",
         username=user,
-        elo=elo,
-        avatar=avatar
+        elo=row["elo"],
+        avatar=row["avatar"]
     )
 
 
@@ -143,14 +109,11 @@ def profile():
         c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
         row = c.fetchone()
 
-        elo = row["elo"]
-        avatar = row["avatar"]
-
     return render_template(
         "profile.html",
         username=user,
-        elo=elo,
-        avatar=avatar
+        elo=row["elo"],
+        avatar=row["avatar"]
     )
 
 
@@ -162,6 +125,7 @@ def game():
     return render_template("game.html")
 
 
-# ================== RUN ==================
+# ================== RUN (RENDER SAFE) ==================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
