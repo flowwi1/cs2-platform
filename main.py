@@ -1,13 +1,12 @@
 from flask import Flask, render_template, redirect, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
-import traceback
 
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
 DB = "database.db"
 
-# ================= DATABASE =================
+# ====== DATABASE ======
 def get_db():
     db = sqlite3.connect(DB)
     db.row_factory = sqlite3.Row
@@ -17,24 +16,19 @@ def init_db():
     with get_db() as db:
         c = db.cursor()
         c.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            password TEXT,
-            elo INTEGER DEFAULT 1000,
-            avatar TEXT DEFAULT 'https://via.placeholder.com/80'
-        )
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY,
+                password TEXT,
+                elo INTEGER DEFAULT 1000,
+                avatar TEXT DEFAULT 'https://via.placeholder.com/80'
+            )
         """)
         db.commit()
 
 init_db()
 
-# ================= ERROR HANDLER =================
-@app.errorhandler(Exception)
-def handle_exception(e):
-    return f"<pre>{traceback.format_exc()}</pre>", 500
-
-# ================= AUTH =================
-@app.route("/login", methods=["GET", "POST"])
+# ====== AUTH ======
+@app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
         u = request.form.get("username")
@@ -63,7 +57,7 @@ def logout():
     session.clear()
     return redirect("/login")
 
-# ================= HOME =================
+# ====== HOME ======
 @app.route("/")
 def home():
     if "user" not in session:
@@ -77,7 +71,7 @@ def home():
         avatar = row["avatar"] if row else 'https://via.placeholder.com/80'
     return render_template("index.html", username=user, elo=elo, avatar=avatar)
 
-# ================= PROFILE =================
+# ====== PROFILE ======
 @app.route("/profile")
 def profile():
     if "user" not in session:
@@ -91,6 +85,5 @@ def profile():
         avatar = row["avatar"] if row else 'https://via.placeholder.com/80'
     return render_template("profile.html", username=user, elo=elo, avatar=avatar)
 
-# ================= RUN =================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000)

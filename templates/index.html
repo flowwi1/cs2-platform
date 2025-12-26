@@ -2,88 +2,15 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>CS2 PLATFORM</title>
-<style>
-body {
-    margin:0;
-    font-family:Arial, sans-serif;
-    background:#0f172a;
-    color:white;
-}
-.container {
-    display:flex;
-    height:100vh;
-}
-.left {
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-}
-.right {
-    width:70px;
-    background:#1e293b;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    padding-top:20px;
-    transition:0.3s;
-}
-.right:hover { width:200px; }
-
-.btn {
-    width:90%;
-    margin:5px 0;
-    padding:8px;
-    background:#22c55e;
-    color:black;
-    text-decoration:none;
-    text-align:center;
-    border-radius:8px;
-}
-.btn:hover { background:#16a34a; }
-
-.avatar {
-    width:90px;
-    height:90px;
-    border-radius:50%;
-    border:2px solid #22c55e;
-    margin-bottom:20px;
-}
-.mode {
-    background:#1e293b;
-    padding:25px 40px;
-    border-radius:14px;
-    font-size:24px;
-    margin-top:20px;
-    cursor:pointer;
-}
-.mode:hover {
-    background:#22c55e;
-    color:black;
-}
-</style>
+<title>Home - CS2 PLATFORM</title>
 </head>
 <body>
-
-<div class="container">
-    <div class="left">
-        <img src="{{ avatar }}" class="avatar">
-        <h1>Привіт, {{ username }}</h1>
-        <p>ELO: {{ elo }}</p>
-
-        <div class="mode" onclick="location.href='/game'">
-            🎮 ЗНАЙТИ МАТЧ
-        </div>
-    </div>
-
-    <div class="right">
-        <a href="/" class="btn">Головна</a>
-        <a href="/profile" class="btn">Профіль</a>
-        <a href="/logout" class="btn">Вихід</a>
-    </div>
-</div>
-
+<h1>Привіт, {{ username }}!</h1>
+<p>ELO: {{ elo }}</p>
+<img src="{{ avatar }}" width="80" height="80">
+<br>
+<a href="/profile">Профіль</a>
+<a href="/logout">Вихід</a>
 </body>
 </html>
+

@@ -2,33 +2,14 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<title>Профіль</title>
-<style>
-body {
-    background:#0f172a;
-    color:white;
-    font-family:Arial;
-    text-align:center;
-}
-.avatar {
-    width:120px;
-    border-radius:50%;
-    border:2px solid #22c55e;
-}
-a {
-    display:inline-block;
-    margin-top:20px;
-    color:#22c55e;
-}
-</style>
+<title>Profile - CS2 PLATFORM</title>
 </head>
 <body>
-
-<img src="{{ avatar }}" class="avatar">
-<h1>{{ username }}</h1>
+<h1>Профіль: {{ username }}</h1>
 <p>ELO: {{ elo }}</p>
-
-<a href="/">⬅ Назад</a>
-
+<img src="{{ avatar }}" width="80" height="80">
+<br>
+<a href="/">Головна</a>
+<a href="/logout">Вихід</a>
 </body>
 </html>
