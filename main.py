@@ -89,7 +89,6 @@ def login():
         user = c.fetchone()
 
         if not user:
-            # реєстрація нового користувача
             c.execute("INSERT INTO users VALUES (?, ?, ?)", (u, generate_password_hash(p), 1000))
             db.commit()
             session["user"] = u
@@ -117,18 +116,29 @@ def home():
     return render_template("index.html", username=session["user"], elo=elo)
 
 # ================== PROFILE ==================
-@app.route("/profile")
+@app.route("/profile", methods=["GET", "POST"])
 def profile():
     if "user" not in session:
         return redirect("/login")
     db = get_db()
     c = db.cursor()
+    user = session["user"]
 
-    c.execute("SELECT elo FROM users WHERE username=?", (session["user"],))
+    # Створення команди
+    if request.method == "POST" and "create_team" in request.form:
+        team_name = request.form["team_name"]
+        c.execute("INSERT INTO teams (name, leader) VALUES (?, ?)", (team_name, user))
+        team_id = c.lastrowid
+        c.execute("INSERT INTO team_members (team_id, username) VALUES (?, ?)", (team_id, user))
+        db.commit()
+        return redirect("/profile")
+
+    # ELO
+    c.execute("SELECT elo FROM users WHERE username=?", (user,))
     elo = c.fetchone()[0]
 
     # Друзі
-    c.execute("SELECT friend FROM friends WHERE user=?", (session["user"],))
+    c.execute("SELECT friend FROM friends WHERE user=?", (user,))
     friends = [f[0] for f in c.fetchall()]
 
     # Команди
@@ -136,10 +146,10 @@ def profile():
         SELECT t.id, t.name FROM teams t
         JOIN team_members tm ON t.id = tm.team_id
         WHERE tm.username=?
-    """, (session["user"],))
+    """, (user,))
     teams = c.fetchall()
 
-    return render_template("profile.html", username=session["user"], elo=elo, friends=friends, teams=teams)
+    return render_template("profile.html", username=user, elo=elo, friends=friends, teams=teams)
 
 # ================== FRIENDS ==================
 @app.route("/friends", methods=["GET", "POST"])
@@ -167,7 +177,7 @@ def friends_page():
     if request.method == "POST" and "add_friend" in request.form:
         target = request.form["target"]
 
-        # Перевірка, чи користувач вже у друзях
+        # Перевірка, чи вже друзі
         c.execute("SELECT 1 FROM friends WHERE user=? AND friend=?", (user, target))
         if c.fetchone():
             message = f"{target} вже у твоїх друзях"
@@ -184,9 +194,7 @@ def friends_page():
     # Прийняти заявку
     if request.method == "POST" and "accept" in request.form:
         sender = request.form["sender"]
-        # видалити заявку
         c.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (sender, user))
-        # додати у друзі обох
         c.execute("INSERT OR IGNORE INTO friends VALUES (?, ?)", (user, sender))
         c.execute("INSERT OR IGNORE INTO friends VALUES (?, ?)", (sender, user))
         db.commit()
@@ -203,20 +211,6 @@ def friends_page():
     return render_template("friends.html", username=user, friends=friends, requests=requests, search_result=search_result, message=message)
 
 # ================== TEAMS ==================
-@app.route("/create_team", methods=["POST"])
-def create_team():
-    if "user" not in session:
-        return redirect("/login")
-    team_name = request.form["team_name"]
-    user = session["user"]
-    db = get_db()
-    c = db.cursor()
-    c.execute("INSERT INTO teams (name, leader) VALUES (?, ?)", (team_name, user))
-    team_id = c.lastrowid
-    c.execute("INSERT INTO team_members (team_id, username) VALUES (?, ?)", (team_id, user))
-    db.commit()
-    return redirect("/profile")
-
 @app.route("/invite_friend", methods=["POST"])
 def invite_friend():
     if "user" not in session:
@@ -227,12 +221,10 @@ def invite_friend():
     db = get_db()
     c = db.cursor()
 
-    # Перевірка, чи друг у списку друзів
     c.execute("SELECT 1 FROM friends WHERE user=? AND friend=?", (user, friend_name))
     if not c.fetchone():
         return "Це не твій друг!"
 
-    # Перевірка, чи вже в команді
     c.execute("SELECT 1 FROM team_members WHERE team_id=? AND username=?", (team_id, friend_name))
     if not c.fetchone():
         c.execute("INSERT INTO team_members (team_id, username) VALUES (?, ?)", (team_id, friend_name))

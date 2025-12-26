@@ -1,109 +1,102 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-<meta charset="UTF-8">
-<title>CS2 PLATFORM</title>
+{% extends "base.html" %}
+{% block content %}
 <style>
-body {
-    margin:0;
-    font-family:'Arial', sans-serif;
-    background:#0f172a;
-    color:white;
-}
-.container {
-    display:flex;
-    height:100vh;
-}
+    body {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: #fff;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
 
-/* Права колонка */
-.right {
-    width:60px;
-    background:#1e293b;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    padding-top:20px;
-    padding-left:5px;
-    padding-right:5px;
-    box-shadow: -3px 0 5px rgba(0,0,0,0.3);
-    transition: width 0.3s;
-    overflow:hidden;
-}
-.right:hover { width:200px; }
+    .container-main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+        text-align: center;
+    }
 
-.btn {
-    padding:6px 12px;
-    margin:5px 0;
-    width:90%;
-    font-size:14px;
-    background:#22c55e;
-    border:none;
-    border-radius:8px;
-    color:black;
-    cursor:pointer;
-    text-align:center;
-    text-decoration:none;
-    transition: all 0.3s;
-}
-.btn:hover { background:#16a34a; }
+    h1 {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        color: #22c55e;
+        text-shadow: 0 0 10px #22c55e;
+    }
 
-/* Ліва частина сторінки */
-.left {
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    position:relative;
-}
+    .user-info {
+        margin-bottom: 30px;
+        font-size: 1.2rem;
+        color: #e0e7ff;
+    }
 
-/* Кнопка Грати в верхньому лівому куті */
-.btn-play {
-    position:absolute;
-    top:20px;
-    left:20px;
-    padding:12px 25px;
-    font-size:18px;
-    background:#22c55e;
-    border:none;
-    border-radius:10px;
-    font-weight:bold;
-    color:black;
-    cursor:pointer;
-    transition: all 0.3s;
-}
-.btn-play:hover { background:#16a34a; transform: scale(1.05); }
+    .nav-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 15px;
+    }
 
-/* Центр сторінки */
-.welcome-box {
-    text-align:center;
-}
-.welcome-box h1 {
-    font-size:36px;
-    color:#22c55e;
-    margin-bottom:20px;
-}
-.welcome-box p {
-    font-size:18px;
-    color:#a5b4fc;
-}
+    /* Головна кнопка */
+    .btn-home {
+        padding: 18px 40px;
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #0f172a;
+        background: linear-gradient(45deg, #facc15, #22c55e);
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(255, 255, 0, 0.5);
+    }
+
+    .btn-home:hover {
+        background: linear-gradient(45deg, #fcd34d, #16a34a);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(255, 255, 0, 0.7);
+        color: #fff;
+    }
+
+    /* Інші кнопки */
+    .btn-main {
+        padding: 15px 35px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #0f172a;
+        background: #22c55e;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    }
+
+    .btn-main:hover {
+        background: #16a34a;
+        color: #fff;
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+
+    @media(max-width: 600px) {
+        h1 { font-size: 2.2rem; }
+        .btn-main, .btn-home { padding: 12px 25px; font-size: 1rem; }
+    }
 </style>
-</head>
-<body>
-<div class="container">
-    <div class="left">
-        <a href="/game"><button class="btn-play">Грати</button></a>
-        <div class="welcome-box">
-            <h1>Привіт, {{ username }}!</h1>
-            <p>Ласкаво просимо на платформу CS2! Додавай друзів і грай у команді 2 на 2.</p>
-        </div>
+
+<div class="container-main">
+    <h1>CS2 PLATFORM</h1>
+    <div class="user-info">
+        Привіт, <strong>{{ username }}</strong>! Ваш ELO: <strong>{{ elo }}</strong>
     </div>
-    <div class="right">
-        <a href="/" class="btn">Головна</a>
-        <a href="/profile" class="btn">Профіль</a>
-        <a href="/friends" class="btn">Друзі</a>
-        <a href="/logout" class="btn">Вихід</a>
+
+    <div class="nav-buttons">
+        <a href="/" class="btn-home">Головна</a>
+        <a href="/profile" class="btn-main">Профіль</a>
+        <a href="/friends" class="btn-main">Друзі</a>
+        <a href="/game" class="btn-main">Гра</a>
+        <a href="/profile" class="btn-main">Команди</a>
+        <a href="/logout" class="btn-main">Вихід</a>
     </div>
 </div>
-</body>
-</html>
+{% endblock %}
