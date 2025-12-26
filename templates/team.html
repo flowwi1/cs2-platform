@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ team_name }}</title>
+</head>
+<body>
+    <h1>Команда: {{ team_name }}</h1>
+    <p>Лідер: {{ leader }}</p>
+    <h2>Учасники:</h2>
+    <ul>
+        {% for member in members %}
+        <li>{{ member }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>

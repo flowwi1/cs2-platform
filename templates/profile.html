@@ -10,14 +10,50 @@
         .sidebar { flex:1; background:#1e293b; padding:20px; display:flex; flex-direction:column; align-items:center; }
         .btn { padding:12px 25px; background:#22c55e; color:black; border:none; border-radius:8px; font-weight:bold; margin:5px 0; width:80%; text-align:center; text-decoration:none; cursor:pointer; }
         h1 { color:#22c55e; }
-        a { text-decoration:none; }
+        h2 { color:#3b82f6; }
+        ul { list-style:none; padding:0; }
+        li { margin:5px 0; }
+        input, select { padding:8px; margin:5px 0; width:90%; border-radius:5px; border:none; }
+        form { margin-top:20px; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="main">
             <h1>Профіль користувача: {{ username }}</h1>
-            <p>Тут можна буде додати статистику, інформацію про геймплей тощо.</p>
+            <p>ELO: {{ elo }}</p>
+
+            <h2>Мої друзі:</h2>
+            <ul>
+                {% for friend in friends %}
+                    <li>{{ friend }}</li>
+                {% endfor %}
+            </ul>
+
+            <h2>Мої команди:</h2>
+            <ul>
+                {% for t in teams %}
+                    <li><a href="/team/{{ t[0] }}">{{ t[1] }}</a></li>
+                {% endfor %}
+            </ul>
+
+            <h2>Створити команду</h2>
+            <form action="/create_team" method="post">
+                <input type="text" name="team_name" placeholder="Назва команди" required>
+                <button type="submit" class="btn">Створити</button>
+            </form>
+
+            <h2>Запросити друга в команду</h2>
+            <form action="/invite_friend" method="post">
+                <input type="text" name="friend_name" placeholder="Ім'я друга" required>
+                <select name="team_id" required>
+                    <option value="">Виберіть команду</option>
+                    {% for t in teams %}
+                        <option value="{{ t[0] }}">{{ t[1] }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn">Запросити</button>
+            </form>
         </div>
         <div class="sidebar">
             <h2>{{ username }}</h2>
