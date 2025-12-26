@@ -15,7 +15,7 @@ def init_db():
     db = get_db()
     c = db.cursor()
 
-    # Користувачі та друзі
+    # Користувачі
     c.execute("""
     CREATE TABLE IF NOT EXISTS users (
         username TEXT PRIMARY KEY,
@@ -23,18 +23,39 @@ def init_db():
         elo INTEGER
     )
     """)
+
+    # Друзі
     c.execute("""
     CREATE TABLE IF NOT EXISTS friends (
         user TEXT,
         friend TEXT
     )
     """)
+
+    # Заявки у друзі
     c.execute("""
     CREATE TABLE IF NOT EXISTS friend_requests (
         sender TEXT,
         receiver TEXT
     )
     """)
+
+    # Команди
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS teams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        leader TEXT
+    )
+    """)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS team_members (
+        team_id INTEGER,
+        username TEXT
+    )
+    """)
+
+    # Черга та матчі
     c.execute("""
     CREATE TABLE IF NOT EXISTS queue (
         username TEXT,
@@ -50,24 +71,9 @@ def init_db():
         winner TEXT
     )
     """)
-    # Команди
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS teams (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        leader TEXT
-    )
-    """)
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS team_members (
-        team_id INTEGER,
-        username TEXT
-    )
-    """)
     db.commit()
     db.close()
 
-# Ініціалізація БД
 init_db()
 
 # ================== AUTH ==================
@@ -83,6 +89,7 @@ def login():
         user = c.fetchone()
 
         if not user:
+            # реєстрація нового користувача
             c.execute("INSERT INTO users VALUES (?, ?, ?)", (u, generate_password_hash(p), 1000))
             db.commit()
             session["user"] = u
@@ -124,7 +131,7 @@ def profile():
     c.execute("SELECT friend FROM friends WHERE user=?", (session["user"],))
     friends = [f[0] for f in c.fetchall()]
 
-    # Команди користувача
+    # Команди
     c.execute("""
         SELECT t.id, t.name FROM teams t
         JOIN team_members tm ON t.id = tm.team_id
@@ -145,7 +152,7 @@ def friends_page():
     message = None
     search_result = None
 
-    # Пошук
+    # Пошук користувача
     if request.method == "POST" and "search" in request.form:
         name = request.form["search_name"]
         c.execute("SELECT username FROM users WHERE username=?", (name,))
@@ -156,24 +163,40 @@ def friends_page():
         else:
             search_result = name
 
-    # Заявка в друзі
+    # Надіслати заявку в друзі
     if request.method == "POST" and "add_friend" in request.form:
         target = request.form["target"]
-        c.execute("INSERT INTO friend_requests VALUES (?, ?)", (user, target))
-        db.commit()
-        message = "Заявку надіслано"
+
+        # Перевірка, чи користувач вже у друзях
+        c.execute("SELECT 1 FROM friends WHERE user=? AND friend=?", (user, target))
+        if c.fetchone():
+            message = f"{target} вже у твоїх друзях"
+        else:
+            # Перевірка, чи заявка вже є
+            c.execute("SELECT 1 FROM friend_requests WHERE sender=? AND receiver=?", (user, target))
+            if not c.fetchone():
+                c.execute("INSERT INTO friend_requests VALUES (?, ?)", (user, target))
+                db.commit()
+                message = "Заявку надіслано"
+            else:
+                message = "Заявка вже надіслана"
 
     # Прийняти заявку
     if request.method == "POST" and "accept" in request.form:
         sender = request.form["sender"]
+        # видалити заявку
         c.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (sender, user))
-        c.execute("INSERT INTO friends VALUES (?, ?)", (user, sender))
-        c.execute("INSERT INTO friends VALUES (?, ?)", (sender, user))
+        # додати у друзі обох
+        c.execute("INSERT OR IGNORE INTO friends VALUES (?, ?)", (user, sender))
+        c.execute("INSERT OR IGNORE INTO friends VALUES (?, ?)", (sender, user))
         db.commit()
+        message = f"Ви додали {sender} у друзі!"
 
+    # Заявки на дружбу
     c.execute("SELECT sender FROM friend_requests WHERE receiver=?", (user,))
     requests = [r[0] for r in c.fetchall()]
 
+    # Список друзів
     c.execute("SELECT friend FROM friends WHERE user=?", (user,))
     friends = [f[0] for f in c.fetchall()]
 
@@ -203,11 +226,17 @@ def invite_friend():
     user = session["user"]
     db = get_db()
     c = db.cursor()
+
+    # Перевірка, чи друг у списку друзів
     c.execute("SELECT 1 FROM friends WHERE user=? AND friend=?", (user, friend_name))
     if not c.fetchone():
         return "Це не твій друг!"
-    c.execute("INSERT INTO team_members (team_id, username) VALUES (?, ?)", (team_id, friend_name))
-    db.commit()
+
+    # Перевірка, чи вже в команді
+    c.execute("SELECT 1 FROM team_members WHERE team_id=? AND username=?", (team_id, friend_name))
+    if not c.fetchone():
+        c.execute("INSERT INTO team_members (team_id, username) VALUES (?, ?)", (team_id, friend_name))
+        db.commit()
     return redirect("/profile")
 
 @app.route("/team/<int:team_id>")
