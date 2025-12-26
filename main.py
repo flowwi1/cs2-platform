@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
-import os
+import traceback
 
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
@@ -28,6 +28,11 @@ def init_db():
 
 init_db()
 
+# ================= ERROR HANDLER =================
+@app.errorhandler(Exception)
+def handle_exception(e):
+    return f"<pre>{traceback.format_exc()}</pre>", 500
+
 # ================= AUTH =================
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -41,7 +46,7 @@ def login():
             c.execute("SELECT password FROM users WHERE username=?", (u,))
             user = c.fetchone()
             if not user:
-                c.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
+                c.execute("INSERT INTO users (username, password) VALUES (?, ?)",
                           (u, generate_password_hash(p)))
                 db.commit()
                 session["user"] = u
@@ -88,4 +93,4 @@ def profile():
 
 # ================= RUN =================
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=5000, debug=True)
