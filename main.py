@@ -5,127 +5,87 @@ import os
 
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
-
 DB = "database.db"
 
-
-# ================== DATABASE ==================
+# ================= DATABASE =================
 def get_db():
     db = sqlite3.connect(DB)
     db.row_factory = sqlite3.Row
     return db
 
-
 def init_db():
     with get_db() as db:
         c = db.cursor()
-
         c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
-            password TEXT NOT NULL,
+            password TEXT,
             elo INTEGER DEFAULT 1000,
-            avatar TEXT DEFAULT 'https://i.imgur.com/8Km9tLL.png'
+            avatar TEXT DEFAULT 'https://via.placeholder.com/80'
         )
         """)
-
         db.commit()
 
-
-# 🔥 ВАЖЛИВО: ініціалізація БД ОДРАЗУ
 init_db()
 
-
-# ================== AUTH ==================
+# ================= AUTH =================
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         u = request.form.get("username")
         p = request.form.get("password")
-
         if not u or not p:
             return render_template("login.html", message="Введіть логін і пароль")
-
         with get_db() as db:
             c = db.cursor()
-            c.execute("SELECT * FROM users WHERE username=?", (u,))
+            c.execute("SELECT password FROM users WHERE username=?", (u,))
             user = c.fetchone()
-
             if not user:
-                c.execute(
-                    "INSERT INTO users (username, password) VALUES (?, ?)",
-                    (u, generate_password_hash(p))
-                )
+                c.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
+                          (u, generate_password_hash(p)))
                 db.commit()
                 session["user"] = u
                 return redirect("/")
-
-            if check_password_hash(user["password"], p):
+            elif check_password_hash(user["password"], p):
                 session["user"] = u
                 return redirect("/")
-
-            return render_template("login.html", message="Невірний пароль")
-
+            else:
+                return render_template("login.html", message="Неправильний пароль")
     return render_template("login.html")
-
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect("/login")
 
-
-# ================== HOME ==================
+# ================= HOME =================
 @app.route("/")
 def home():
     if "user" not in session:
         return redirect("/login")
-
     user = session["user"]
-
     with get_db() as db:
         c = db.cursor()
         c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
         row = c.fetchone()
+        elo = row["elo"] if row else 1000
+        avatar = row["avatar"] if row else 'https://via.placeholder.com/80'
+    return render_template("index.html", username=user, elo=elo, avatar=avatar)
 
-    return render_template(
-        "index.html",
-        username=user,
-        elo=row["elo"],
-        avatar=row["avatar"]
-    )
-
-
-# ================== PROFILE ==================
+# ================= PROFILE =================
 @app.route("/profile")
 def profile():
     if "user" not in session:
         return redirect("/login")
-
     user = session["user"]
-
     with get_db() as db:
         c = db.cursor()
         c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
         row = c.fetchone()
+        elo = row["elo"] if row else 1000
+        avatar = row["avatar"] if row else 'https://via.placeholder.com/80'
+    return render_template("profile.html", username=user, elo=elo, avatar=avatar)
 
-    return render_template(
-        "profile.html",
-        username=user,
-        elo=row["elo"],
-        avatar=row["avatar"]
-    )
-
-
-# ================== GAME ==================
-@app.route("/game")
-def game():
-    if "user" not in session:
-        return redirect("/login")
-    return render_template("game.html")
-
-
-# ================== RUN (RENDER SAFE) ==================
+# ================= RUN =================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
