@@ -5,10 +5,11 @@ import os
 import time
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "super-secret-key")
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret")
+
 DB = "database.db"
 
-# ================== DATABASE ==================
+# ---------- DATABASE ----------
 def get_db():
     db = sqlite3.connect(DB)
     db.row_factory = sqlite3.Row
@@ -17,30 +18,23 @@ def get_db():
 def init_db():
     with get_db() as db:
         c = db.cursor()
-        # Users table
+
         c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
             password TEXT,
             elo INTEGER DEFAULT 1000,
-            avatar TEXT DEFAULT '/static/default.png'
+            avatar TEXT DEFAULT 'https://i.imgur.com/8Km9tLL.png'
         )
         """)
-        # Friends table
+
         c.execute("""
         CREATE TABLE IF NOT EXISTS friends (
             user TEXT,
             friend TEXT
         )
         """)
-        # Friend requests table
-        c.execute("""
-        CREATE TABLE IF NOT EXISTS friend_requests (
-            sender TEXT,
-            receiver TEXT
-        )
-        """)
-        # Teams
+
         c.execute("""
         CREATE TABLE IF NOT EXISTS teams (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,59 +42,44 @@ def init_db():
             leader TEXT
         )
         """)
+
         c.execute("""
         CREATE TABLE IF NOT EXISTS team_members (
             team_id INTEGER,
             username TEXT
         )
         """)
-        # Queue & matches
-        c.execute("""
-        CREATE TABLE IF NOT EXISTS queue (
-            username TEXT,
-            elo INTEGER,
-            joined INTEGER
-        )
-        """)
-        c.execute("""
-        CREATE TABLE IF NOT EXISTS matches (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            p1 TEXT,
-            p2 TEXT,
-            winner TEXT
-        )
-        """)
+
         db.commit()
 
 init_db()
 
-# ================== AUTH ==================
+# ---------- AUTH ----------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        if not username or not password:
-            return render_template("login.html", message="Введіть логін і пароль")
+        u = request.form["username"]
+        p = request.form["password"]
 
         with get_db() as db:
             c = db.cursor()
-            c.execute("SELECT password FROM users WHERE username=?", (username,))
+            c.execute("SELECT password FROM users WHERE username=?", (u,))
             user = c.fetchone()
 
             if not user:
-                # Register new user
-                c.execute("INSERT INTO users (username, password) VALUES (?, ?)",
-                          (username, generate_password_hash(password)))
+                c.execute(
+                    "INSERT INTO users (username, password) VALUES (?, ?)",
+                    (u, generate_password_hash(p))
+                )
                 db.commit()
-                session["user"] = username
-                return redirect("/game")
-            elif check_password_hash(user["password"], password):
-                session["user"] = username
-                return redirect("/game")
+                session["user"] = u
+                return redirect("/")
+            elif check_password_hash(user["password"], p):
+                session["user"] = u
+                return redirect("/")
             else:
-                return render_template("login.html", message="Неправильний пароль")
+                return render_template("login.html", error="Невірний пароль")
+
     return render_template("login.html")
 
 @app.route("/logout")
@@ -108,46 +87,60 @@ def logout():
     session.clear()
     return redirect("/login")
 
-# ================== GAME ==================
-@app.route("/game")
-def game():
+# ---------- HOME ----------
+@app.route("/")
+def index():
     if "user" not in session:
         return redirect("/login")
+
     user = session["user"]
+
     with get_db() as db:
         c = db.cursor()
         c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
-        row = c.fetchone()
-        elo = row["elo"] if row else 1000
-        avatar = row["avatar"] if row else "/static/default.png"
-    return render_template("game.html", username=user, elo=elo, avatar=avatar)
+        u = c.fetchone()
 
-# ================== QUEUE ==================
-@app.route("/queue")
-def queue():
+    return render_template(
+        "index.html",
+        username=user,
+        elo=u["elo"],
+        avatar=u["avatar"]
+    )
+
+# ---------- PROFILE ----------
+@app.route("/profile")
+def profile():
     if "user" not in session:
         return redirect("/login")
+
     user = session["user"]
+
     with get_db() as db:
         c = db.cursor()
-        c.execute("SELECT elo FROM users WHERE username=?", (user,))
-        row = c.fetchone()
-        elo = row["elo"] if row else 1000
-        c.execute("INSERT OR REPLACE INTO queue (username, elo, joined) VALUES (?, ?, ?)",
-                  (user, elo, int(time.time())))
-        db.commit()
-    return "Ти доданий у чергу! (після тестів можна редирект на /matchmaking)"
 
-# ================== HOME ==================
-@app.route("/")
-def home():
-    if "user" not in session:
-        return redirect("/login")
-    user = session["user"]
-    return redirect("/game")
+        c.execute("SELECT elo, avatar FROM users WHERE username=?", (user,))
+        u = c.fetchone()
 
-# ================== RUN ==================
+        c.execute("SELECT friend FROM friends WHERE user=?", (user,))
+        friends = [f["friend"] for f in c.fetchall()]
+
+        c.execute("""
+        SELECT t.name FROM teams t
+        JOIN team_members tm ON t.id = tm.team_id
+        WHERE tm.username=?
+        """, (user,))
+        teams = c.fetchall()
+
+    return render_template(
+        "profile.html",
+        username=user,
+        elo=u["elo"],
+        avatar=u["avatar"],
+        friends=friends,
+        teams=teams
+    )
+
+# ---------- RUN (RENDER) ----------
 if __name__ == "__main__":
-    # Для Render порт читаємо з ENV
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    app.run(host="0.0.0.0", port=port)

@@ -1,85 +1,82 @@
-{% extends "base.html" %}
-{% block content %}
-<div class="container py-4">
-
-    <h2 class="text-white mb-3">Профіль: {{ username }}</h2>
-    <p class="text-white">ELO: {{ elo }}</p>
-
-    <hr class="border-secondary">
-
-    <!-- Друзі -->
-    <h4 class="text-white mb-3">Мої друзі</h4>
-    {% if friends %}
-    <div class="row mb-3">
-        {% for f in friends %}
-        <div class="col-md-3 col-sm-4 mb-3">
-            <div class="friend-card p-3 text-center bg-dark rounded shadow-sm">
-                <img src="{{ f.avatar if f.avatar else '/static/default.png' }}" 
-                     alt="{{ f.username }}" class="rounded-circle mb-2" style="width:70px; height:70px;">
-                <div class="text-white">{{ f.username }}</div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <p class="text-white">У вас поки що немає друзів.</p>
-    {% endif %}
-
-    <hr class="border-secondary">
-
-    <!-- Команди -->
-    <h4 class="text-white mb-3">Мої команди</h4>
-    {% if teams %}
-    <div class="row mb-3">
-        {% for t in teams %}
-        <div class="col-md-4 col-sm-6 mb-3">
-            <div class="team-card bg-dark p-3 rounded shadow-sm d-flex justify-content-between align-items-center">
-                <span class="text-white fw-bold">{{ t[1] }}</span>
-                <a href="/team/{{ t[0] }}" class="btn btn-success btn-sm">Перейти</a>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <p class="text-white">Ви ще не створили жодної команди.</p>
-    {% endif %}
-
-    <hr class="border-secondary">
-
-    <!-- Створення команди -->
-    <h4 class="text-white mb-3">Створити команду</h4>
-    <form method="POST" class="d-flex flex-column flex-wrap mb-4">
-        <input type="text" name="team_name" class="form-control mb-2" placeholder="Назва команди" required>
-
-        <!-- Запросити друзів -->
-        {% if friends %}
-        <div class="mb-2">
-            <label class="text-white mb-1">Запросити друзів:</label>
-            <div class="d-flex flex-wrap">
-                {% for f in friends %}
-                <div class="form-check me-3 mb-2">
-                    <input class="form-check-input" type="checkbox" name="invite" value="{{ f.username }}" id="friend-{{ loop.index }}">
-                    <label class="form-check-label text-white" for="friend-{{ loop.index }}">
-                        {{ f.username }}
-                    </label>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <button type="submit" name="create_team" class="btn btn-success">Створити команду</button>
-    </form>
-</div>
-
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Профіль</title>
 <style>
-.friend-card img {
-    object-fit: cover;
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+}
+
+.container {
+    max-width: 900px;
+    margin: auto;
+    padding: 40px;
+}
+
+/* Аватар */
+.avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
     border: 2px solid #22c55e;
 }
-.team-card:hover {
-    transform: scale(1.02);
-    transition: 0.3s;
+
+/* Карточки */
+.card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+h2, h3 {
+    color: #22c55e;
+}
+
+.friend {
+    padding: 6px 0;
+    border-bottom: 1px solid #334155;
 }
 </style>
-{% endblock %}
+</head>
+
+<body>
+<div class="container">
+
+    <img src="{{ avatar }}" class="avatar" alt="avatar">
+
+    <h2>{{ username }}</h2>
+    <p>ELO: {{ elo }}</p>
+
+    <div class="card">
+        <h3>Мої друзі</h3>
+        {% if friends %}
+            {% for f in friends %}
+                <div class="friend">{{ f }}</div>
+            {% endfor %}
+        {% else %}
+            <p>Друзів поки немає</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3>Мої команди</h3>
+        {% if teams %}
+            {% for t in teams %}
+                <div class="friend">{{ t["name"] }}</div>
+            {% endfor %}
+        {% else %}
+            <p>Команд поки немає</p>
+        {% endif %}
+    </div>
+
+    <br>
+    <a href="/" style="color:#22c55e;">← Назад</a>
+
+</div>
+</body>
+</html>
