@@ -114,13 +114,34 @@ def logout():
 def home():
     if "user" not in session:
         return redirect("/login")
+    
     user = session["user"]
+    
     with get_db() as db:
         c = db.cursor()
+        
+        # ELO
         c.execute("SELECT elo FROM users WHERE username=?", (user,))
         row = c.fetchone()
         elo = row["elo"] if row else 1000
-    return render_template("index.html", username=user, elo=elo)
+        
+        # FC (якщо немає поля у БД, ставимо дефолт 0)
+        fc = 0
+
+        # Команди користувача
+        c.execute("""
+            SELECT t.id, t.name FROM teams t
+            JOIN team_members tm ON t.id = tm.team_id
+            WHERE tm.username=?
+        """, (user,))
+        teams = c.fetchall()  # sqlite3.Row, звертатись як team['name']
+
+        # Друзі користувача
+        c.execute("SELECT friend FROM friends WHERE user=?", (user,))
+        friends = [f["friend"] for f in c.fetchall()]
+    
+    return render_template("index.html", username=user, elo=elo, fc=fc, teams=teams, friends=friends)
+
 
 # ================== PROFILE ==================
 @app.route("/profile", methods=["GET", "POST"])
