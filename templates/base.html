@@ -1,46 +1,152 @@
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title if title else "CS2 Platform" }}</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background-color: #f0f2f5; }
-        .navbar { margin-bottom: 20px; }
-        .card { margin-bottom: 15px; }
-        .btn-main { background-color: #0d6efd; color: white; }
-        .btn-main:hover { background-color: #0b5ed7; }
-        .friend-card, .team-card { padding: 10px; border-radius: 10px; background-color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
-    </style>
-</head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" href="/">CS2 Platform</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                {% if session.user %}
-                    <li class="nav-item"><a class="nav-link" href="/">Головна</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/profile">Профіль</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/friends">Друзі</a></li>
-                    <li class="nav-item"><a class="nav-link" href="/logout">Вийти</a></li>
-                {% else %}
-                    <li class="nav-item"><a class="nav-link" href="/login">Увійти</a></li>
-                {% endif %}
-            </ul>
-        </div>
-    </div>
-</nav>
+{% extends "base.html" %}
+{% block content %}
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #fff;
+    overflow-x: hidden;
+}
 
-<div class="container">
-    {% block content %}{% endblock %}
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: rgba(15, 23, 42, 0.9);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+.logo-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.logo-center h1 {
+    margin: 0;
+    font-size: 2rem;
+    color: #22c55e;
+    text-shadow: 0 0 10px #22c55e;
+}
+
+.logo-center .elo-info {
+    font-size: 1rem;
+    color: #e0e7ff;
+}
+
+.left-buttons, .right-buttons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-main, .btn-play {
+    padding: 12px 30px;
+    font-weight: bold;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-play {
+    background: #facc15;
+    color: #0f172a;
+}
+
+.btn-play:hover {
+    background: #fcd34d;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(255,255,0,0.6);
+}
+
+.btn-main {
+    background: #22c55e;
+    color: #0f172a;
+}
+
+.btn-main:hover {
+    background: #16a34a;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.profile-panel {
+    position: fixed;
+    top: 0;
+    right: -350px;
+    width: 350px;
+    height: 100%;
+    background: #1e293b;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.7);
+    padding: 20px;
+    transition: right 0.4s ease;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.profile-panel.active {
+    right: 0;
+}
+
+.profile-panel h2 {
+    margin-top: 0;
+    color: #22c55e;
+}
+
+.profile-panel .close-btn {
+    background: #ef4444;
+    color: #fff;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    float: right;
+    border-radius: 5px;
+}
+</style>
+
+<div class="header">
+    <div class="left-buttons">
+        <a href="/game" class="btn-play">Грати</a>
+    </div>
+
+    <div class="logo-center">
+        <h1>CS2 PLATFORM</h1>
+        <div class="elo-info">ELO: {{ elo }} | FC: YOUR_FC</div>
+    </div>
+
+    <div class="right-buttons">
+        <button class="btn-main" onclick="toggleProfile()">Профіль</button>
+        <a href="/friends" class="btn-main">Друзі</a>
+        <a href="/profile" class="btn-main">Команди</a>
+        <a href="/logout" class="btn-main">Вихід</a>
+    </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<!-- Бічна панель профілю -->
+<div id="profilePanel" class="profile-panel">
+    <button class="close-btn" onclick="toggleProfile()">X</button>
+    <h2>{{ username }}</h2>
+    <p>ELO: {{ elo }}</p>
+    <p>Інформація про профіль...</p>
+    <hr>
+    <h4>Мої команди</h4>
+    <ul>
+        {% for team in teams %}
+        <li>{{ team[1] }}</li>
+        {% else %}
+        <li>У вас немає команд</li>
+        {% endfor %}
+    </ul>
+</div>
+
+<script>
+function toggleProfile() {
+    const panel = document.getElementById('profilePanel');
+    panel.classList.toggle('active');
+}
+</script>
+{% endblock %}
