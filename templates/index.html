@@ -6,7 +6,7 @@
 <style>
 body {
     margin:0;
-    font-family:Arial,sans-serif;
+    font-family:Arial, sans-serif;
     background:#0f172a;
     color:white;
 }
@@ -14,72 +14,76 @@ body {
     display:flex;
     height:100vh;
 }
-.right {
-    width:60px;
-    background:#1e293b;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    padding-top:20px;
-    transition:width .3s;
-    overflow:hidden;
-}
-.right:hover { width:200px; }
-.btn {
-    padding:8px;
-    margin:5px 0;
-    width:90%;
-    background:#22c55e;
-    color:black;
-    border-radius:8px;
-    text-decoration:none;
-    text-align:center;
-}
 .left {
     flex:1;
     display:flex;
     flex-direction:column;
     align-items:center;
-    padding-top:80px;
+    justify-content:center;
 }
+.right {
+    width:70px;
+    background:#1e293b;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:20px;
+    transition:0.3s;
+}
+.right:hover { width:200px; }
+
+.btn {
+    width:90%;
+    margin:5px 0;
+    padding:8px;
+    background:#22c55e;
+    color:black;
+    text-decoration:none;
+    text-align:center;
+    border-radius:8px;
+}
+.btn:hover { background:#16a34a; }
+
 .avatar {
-    width:80px;
-    height:80px;
+    width:90px;
+    height:90px;
     border-radius:50%;
     border:2px solid #22c55e;
+    margin-bottom:20px;
 }
 .mode {
-    margin-top:30px;
     background:#1e293b;
-    padding:30px 60px;
+    padding:25px 40px;
     border-radius:14px;
-    font-size:26px;
-    color:#22c55e;
+    font-size:24px;
+    margin-top:20px;
     cursor:pointer;
+}
+.mode:hover {
+    background:#22c55e;
+    color:black;
 }
 </style>
 </head>
-
 <body>
+
 <div class="container">
+    <div class="left">
+        <img src="{{ avatar }}" class="avatar">
+        <h1>Привіт, {{ username }}</h1>
+        <p>ELO: {{ elo }}</p>
 
-<div class="left">
-    <img class="avatar" src="{{ avatar|default('https://i.imgur.com/8Km9tLL.png') }}">
-    <h1>Привіт, {{ username|default('User') }}</h1>
-    <p>ELO: {{ elo|default(1000) }}</p>
+        <div class="mode" onclick="location.href='/game'">
+            🎮 ЗНАЙТИ МАТЧ
+        </div>
+    </div>
 
-    <div class="mode" onclick="location.href='/queue'">
-        🎮 2v2 — ЗНАЙТИ МАТЧ
+    <div class="right">
+        <a href="/" class="btn">Головна</a>
+        <a href="/profile" class="btn">Профіль</a>
+        <a href="/logout" class="btn">Вихід</a>
     </div>
 </div>
 
-<div class="right">
-    <a href="/" class="btn">Головна</a>
-    <a href="/profile" class="btn">Профіль</a>
-    <a href="/friends" class="btn">Друзі</a>
-    <a href="/logout" class="btn">Вихід</a>
-</div>
-
-</div>
 </body>
 </html>

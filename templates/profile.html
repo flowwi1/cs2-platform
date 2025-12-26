@@ -8,46 +8,27 @@ body {
     background:#0f172a;
     color:white;
     font-family:Arial;
-    padding:40px;
+    text-align:center;
 }
-.card {
-    background:#1e293b;
-    padding:20px;
-    border-radius:12px;
-    margin-bottom:20px;
+.avatar {
+    width:120px;
+    border-radius:50%;
+    border:2px solid #22c55e;
+}
+a {
+    display:inline-block;
+    margin-top:20px;
+    color:#22c55e;
 }
 </style>
 </head>
 <body>
 
-<h2>{{ username|default('User') }}</h2>
-<p>ELO: {{ elo|default(1000) }}</p>
+<img src="{{ avatar }}" class="avatar">
+<h1>{{ username }}</h1>
+<p>ELO: {{ elo }}</p>
 
-<div class="card">
-<h3>Друзі</h3>
-{% if friends %}
-<ul>
-{% for f in friends %}
-<li>{{ f }}</li>
-{% endfor %}
-</ul>
-{% else %}
-<p>Друзів немає</p>
-{% endif %}
-</div>
-
-<div class="card">
-<h3>Команди</h3>
-{% if teams %}
-<ul>
-{% for t in teams %}
-<li>{{ t.name }}</li>
-{% endfor %}
-</ul>
-{% else %}
-<p>Команд немає</p>
-{% endif %}
-</div>
+<a href="/">⬅ Назад</a>
 
 </body>
 </html>
