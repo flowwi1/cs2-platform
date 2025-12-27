@@ -6,84 +6,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 * { box-sizing: border-box; font-family: "Segoe UI", system-ui, sans-serif; }
-body { margin: 0; background: #0d0d0d; color: #fff; }
+body { margin: 0; background: #111; color: #fff; }
 
-/* Контейнер */
 .container { display: flex; min-height: 100vh; }
-
-/* Центральна частина */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 40px;
-}
-
-.main-content h1 {
-    font-size: 50px;
-    background: linear-gradient(90deg, #ff6a00, #ff4500);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin: 0;
-}
-
-.main-content p {
-    margin-top: 20px;
-    font-size: 20px;
-    color: #aaa;
-}
 
 /* Бокова панель */
 .side-panel {
-    width: 70px;
-    background: #111;
+    width: 60px;
+    background: #1a1a1a;
     position: relative;
     transition: width 0.3s ease;
     overflow: hidden;
-    box-shadow: -3px 0 10px rgba(0,0,0,0.5);
 }
-
 .side-panel:hover { width: 280px; }
-
 .side-panel .menu { display: flex; flex-direction: column; padding: 20px 10px; }
-
-/* Кнопка профілю зверху */
-.profile-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    margin-bottom: 20px;
-    background: #222;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.profile-btn:hover { background: #ff6a00; }
-
-.profile-btn img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid #ff6a00;
-}
-
-.profile-btn span {
-    white-space: nowrap;
-    opacity: 0;
-    font-weight: bold;
-    transition: opacity 0.3s ease;
-    color: #fff;
-}
-
-.side-panel:hover .profile-btn span { opacity: 1; }
-
-/* Кнопки меню */
-.menu-item {
+.side-panel .menu-item {
     display: flex;
     align-items: center;
     gap: 15px;
@@ -96,50 +33,50 @@ body { margin: 0; background: #0d0d0d; color: #fff; }
     color: #fff;
     font-weight: bold;
 }
-
-.menu-item:hover {
+.side-panel .menu-item:hover {
     background: #ff6a00;
     color: #111;
 }
-
-.menu-item span {
+.side-panel .menu-item span {
     white-space: nowrap;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.3s ease, color 0.3s ease;
+    color: #fff;
 }
-
 .side-panel:hover .menu-item span { opacity: 1; }
-
 .menu-item img { width: 24px; height: 24px; }
 .menu-item a { text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%; }
 
+/* Основний контент */
+.main-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+.main-content h1 {
+    font-size: 48px;
+    color: #ff6a00;
+}
 </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Центральна частина -->
-    <div class="main-content">
-        <h1>Ласкаво просимо на CS2 Platform!</h1>
-        <p>Виберіть функцію з бокової панелі</p>
-    </div>
-
     <!-- Бокова панель -->
     <div class="side-panel">
         <div class="menu">
-            <!-- Верхня кнопка профілю -->
-            <div class="profile-btn">
-                <a href="/profile/{{ username }}">
-                    <img src="{{ avatar }}" alt="Аватар">
-                    <span>{{ username }}</span>
-                </a>
-            </div>
-
-            <!-- Меню -->
             <div class="menu-item">
                 <a href="/home">
                     <img src="https://img.icons8.com/ios-filled/24/ffffff/home.png"/>
                     <span>Головна</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/profile/{{ username }}">
+                    <img src="https://img.icons8.com/ios-filled/24/ffffff/user.png"/>
+                    <span>Профіль</span>
                 </a>
             </div>
             <div class="menu-item">
@@ -157,6 +94,11 @@ body { margin: 0; background: #0d0d0d; color: #fff; }
                 <span>Команди</span>
             </div>
         </div>
+    </div>
+
+    <!-- Основний контент -->
+    <div class="main-content">
+        <h1>Ласкаво просимо на CS2 Platform!</h1>
     </div>
 </div>
 

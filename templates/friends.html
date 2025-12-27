@@ -6,90 +6,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 * { box-sizing: border-box; font-family: "Segoe UI", system-ui, sans-serif; }
-body { margin: 0; background: #0d0d0d; color: #fff; }
+body { margin: 0; background: #111; color: #fff; }
 
-/* Контейнер */
 .container { display: flex; min-height: 100vh; }
-
-/* Центральна частина */
-.main-content {
-    flex: 1;
-    padding: 40px;
-}
-
-.main-content h1 {
-    font-size: 40px;
-    color: #ff6a00;
-    margin-bottom: 20px;
-}
-
-.main-content input {
-    width: 100%;
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    margin-bottom: 10px;
-    font-size: 16px;
-}
-
-.main-content button {
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: none;
-    background: #ff6a00;
-    color: #111;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.main-content button:hover {
-    background: #ff4500;
-}
-
-.result {
-    margin-top: 15px;
-    padding: 10px;
-    background: #222;
-    border-radius: 8px;
-}
 
 /* Бокова панель */
 .side-panel {
-    width: 70px;
-    background: #111;
+    width: 60px;
+    background: #1a1a1a;
     position: relative;
     transition: width 0.3s ease;
     overflow: hidden;
-    box-shadow: -3px 0 10px rgba(0,0,0,0.5);
 }
-
 .side-panel:hover { width: 280px; }
-
 .side-panel .menu { display: flex; flex-direction: column; padding: 20px 10px; }
-
-.profile-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    margin-bottom: 20px;
-    background: #222;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.profile-btn:hover { background: #ff6a00; }
-.profile-btn img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid #ff6a00;
-}
-.profile-btn span { opacity: 0; white-space: nowrap; font-weight: bold; color: #fff; transition: opacity 0.3s ease; }
-.side-panel:hover .profile-btn span { opacity: 1; }
-
-.menu-item {
+.side-panel .menu-item {
     display: flex;
     align-items: center;
     gap: 15px;
@@ -102,63 +33,62 @@ body { margin: 0; background: #0d0d0d; color: #fff; }
     color: #fff;
     font-weight: bold;
 }
-
-.menu-item:hover { background: #ff6a00; color: #111; }
-.menu-item span { white-space: nowrap; opacity: 0; transition: opacity 0.3s ease; }
+.side-panel .menu-item:hover { background: #ff6a00; color: #111; }
+.side-panel .menu-item span { white-space: nowrap; opacity: 0; transition: opacity 0.3s ease, color 0.3s ease; color: #fff; }
 .side-panel:hover .menu-item span { opacity: 1; }
 .menu-item img { width: 24px; height: 24px; }
 .menu-item a { text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%; }
 
+/* Основний контент */
+.main-content {
+    flex: 1;
+    padding: 40px;
+}
+
+.main-content h1 { font-size: 36px; color: #ff6a00; margin-bottom: 20px; }
+
+.friend-search input {
+    width: 60%;
+    padding: 8px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+}
+
+.friend-search button {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background: #ff6a00;
+    color: #111;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.friend-search button:hover { background: #ff4500; }
+
+.friend-list { margin-top: 20px; }
+.friend-list li { margin-bottom: 10px; font-size: 16px; }
+.search-result { margin-top: 10px; font-size: 14px; }
 </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Центральна частина -->
-    <div class="main-content">
-        <h1>Друзі</h1>
-        <form method="POST" action="/search_friend">
-            <input type="text" name="friend_name" placeholder="Знайти друга" required>
-            <button type="submit">Пошук</button>
-        </form>
-
-        {% if search_result %}
-            <div class="result">
-                {{ search_result }}
-                {% if add_friend %}
-                    <form method="GET" action="/add_friend/{{ add_friend }}">
-                        <button type="submit">Відправити запит</button>
-                    </form>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        <h2 style="margin-top: 30px;">Ваші друзі:</h2>
-        {% if friends %}
-            <ul>
-                {% for f in friends %}
-                    <li>{{ f }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>У вас поки немає друзів.</p>
-        {% endif %}
-    </div>
-
     <!-- Бокова панель -->
     <div class="side-panel">
         <div class="menu">
-            <div class="profile-btn">
-                <a href="/profile/{{ username }}">
-                    <img src="{{ avatar }}" alt="Аватар">
-                    <span>{{ username }}</span>
-                </a>
-            </div>
-
             <div class="menu-item">
                 <a href="/home">
                     <img src="https://img.icons8.com/ios-filled/24/ffffff/home.png"/>
                     <span>Головна</span>
+                </a>
+            </div>
+            <div class="menu-item">
+                <a href="/profile/{{ username }}">
+                    <img src="https://img.icons8.com/ios-filled/24/ffffff/user.png"/>
+                    <span>{{ username }}</span>
                 </a>
             </div>
             <div class="menu-item">
@@ -175,6 +105,39 @@ body { margin: 0; background: #0d0d0d; color: #fff; }
                 <img src="https://img.icons8.com/ios-filled/24/ffffff/team.png"/>
                 <span>Команди</span>
             </div>
+        </div>
+    </div>
+
+    <!-- Основний контент -->
+    <div class="main-content">
+        <h1>Друзі</h1>
+
+        <div class="friend-search">
+            <form method="POST">
+                <input type="text" name="friend_name" placeholder="Знайти друга" required>
+                <button type="submit">Пошук</button>
+            </form>
+            {% if search_result %}
+                <div class="search-result">
+                    {{ search_result }}
+                    {% if add_friend %}
+                        <form method="GET" action="/add_friend/{{ add_friend }}">
+                            <button type="submit">Відправити запит</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="friend-list">
+            <h3>Ваші друзі:</h3>
+            <ul>
+            {% for friend in friends_list %}
+                <li>{{ friend }}</li>
+            {% else %}
+                <li>У вас ще немає друзів.</li>
+            {% endfor %}
+            </ul>
         </div>
     </div>
 </div>
