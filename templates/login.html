@@ -2,9 +2,8 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Вхід</title>
+    <title>CS2 Platform - Логін</title>
 
-    <!-- Адаптивність -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <style>
@@ -16,19 +15,19 @@
         body {
             margin: 0;
             min-height: 100vh;
-            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            background: linear-gradient(135deg, #111, #1a1a1a);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .login-box {
-            background: #ffffff;
+            background: #1a1a1a;
             width: 100%;
             max-width: 380px;
             padding: 32px;
             border-radius: 18px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+            box-shadow: 0 25px 50px rgba(255,140,0,0.4);
             animation: appear 0.6s ease;
         }
 
@@ -46,14 +45,14 @@
         h1 {
             margin: 0;
             text-align: center;
-            color: #111827;
+            color: #ff6a00;
         }
 
         .subtitle {
             text-align: center;
             margin: 8px 0 24px;
             font-size: 14px;
-            color: #6b7280;
+            color: #ffa64d;
         }
 
         input {
@@ -61,14 +60,16 @@
             padding: 13px 14px;
             margin-bottom: 14px;
             border-radius: 12px;
-            border: 1px solid #d1d5db;
+            border: 1px solid #333;
+            background: #222;
+            color: #fff;
             font-size: 15px;
         }
 
         input:focus {
             outline: none;
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+            border-color: #ff6a00;
+            box-shadow: 0 0 0 3px rgba(255,106,0,0.2);
         }
 
         button {
@@ -76,7 +77,7 @@
             padding: 13px;
             border: none;
             border-radius: 12px;
-            background: linear-gradient(135deg, #4f46e5, #9333ea);
+            background: linear-gradient(135deg, #ff6a00, #ff4500);
             color: white;
             font-size: 16px;
             font-weight: 600;
@@ -86,30 +87,30 @@
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            box-shadow: 0 10px 25px rgba(255,140,0,0.4);
         }
 
         .message {
             margin-top: 14px;
             text-align: center;
             font-size: 14px;
-            color: #dc2626;
+            color: #ff4500;
         }
 
         .footer {
             margin-top: 20px;
             text-align: center;
             font-size: 12px;
-            color: #9ca3af;
+            color: #888;
         }
     </style>
 </head>
 <body>
 
 <div class="login-box">
-    <h1>Ласкаво просимо 👋</h1>
+    <h1>CS2 Platform</h1>
     <div class="subtitle">
-        Увійди або створити новий акаунт
+        Увійдіть або створіть новий акаунт
     </div>
 
     <form method="POST">
@@ -137,7 +138,7 @@
     {% endif %}
 
     <div class="footer">
-        © 2025 Render Flask App
+        © 2025 CS2 Platform
     </div>
 </div>
 
