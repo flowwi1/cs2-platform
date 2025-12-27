@@ -10,7 +10,13 @@ body { margin: 0; background: #111; color: #fff; }
 
 .container { display: flex; min-height: 100vh; }
 
-/* Бокова панель */
+/* Ліва частина - головна */
+.main-content {
+    flex: 1;
+    padding: 40px;
+}
+
+/* Права панель */
 .side-panel {
     width: 60px;
     background: #1a1a1a;
@@ -18,8 +24,11 @@ body { margin: 0; background: #111; color: #fff; }
     transition: width 0.3s ease;
     overflow: hidden;
 }
+
 .side-panel:hover { width: 280px; }
+
 .side-panel .menu { display: flex; flex-direction: column; padding: 20px 10px; }
+
 .side-panel .menu-item {
     display: flex;
     align-items: center;
@@ -33,50 +42,95 @@ body { margin: 0; background: #111; color: #fff; }
     color: #fff;
     font-weight: bold;
 }
+
 .side-panel .menu-item:hover { background: #ff6a00; color: #111; }
-.side-panel .menu-item span { white-space: nowrap; opacity: 0; transition: opacity 0.3s ease, color 0.3s ease; color: #fff; }
-.side-panel:hover .menu-item span { opacity: 1; }
+.side-panel .menu-item span { white-space: nowrap; opacity: 0; transition: opacity 0.3s ease, color 0.3s ease; }
+.side-panel:hover .menu-item span { opacity: 1; color: #fff; }
+
 .menu-item img { width: 24px; height: 24px; }
 .menu-item a { text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%; }
 
-/* Основний контент */
-.main-content {
-    flex: 1;
-    padding: 40px;
+/* Список друзів */
+.friends-list { margin-top: 20px; }
+.friend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: #222;
+    border-radius: 8px;
+    margin-bottom: 8px;
 }
 
-.main-content h1 { font-size: 36px; color: #ff6a00; margin-bottom: 20px; }
+.friend-item img { width: 40px; height: 40px; border-radius: 50%; }
 
+/* Пошук друзів */
+.friend-search { margin-top: 20px; }
 .friend-search input {
-    width: 60%;
-    padding: 8px;
-    margin-bottom: 8px;
+    width: 100%;
+    padding: 10px;
     border-radius: 6px;
     border: none;
+    margin-bottom: 8px;
     font-size: 14px;
 }
-
 .friend-search button {
-    padding: 8px 16px;
-    border-radius: 6px;
+    width: 100%;
+    padding: 10px;
     border: none;
+    border-radius: 6px;
     background: #ff6a00;
     color: #111;
     font-weight: bold;
     cursor: pointer;
 }
-
 .friend-search button:hover { background: #ff4500; }
 
-.friend-list { margin-top: 20px; }
-.friend-list li { margin-bottom: 10px; font-size: 16px; }
-.search-result { margin-top: 10px; font-size: 14px; }
+.search-result { margin-top: 8px; font-size: 14px; color: #ff6a00; }
 </style>
 </head>
 <body>
-
 <div class="container">
-    <!-- Бокова панель -->
+
+    <!-- Головна частина -->
+    <div class="main-content">
+        <h1>Ваші друзі</h1>
+
+        <!-- Пошук друзів -->
+        <div class="friend-search">
+            <form method="POST" action="/friends">
+                <input type="text" name="friend_name" placeholder="Знайти друга" required/>
+                <button type="submit">Пошук</button>
+            </form>
+
+            {% if search_result %}
+                <div class="search-result">
+                    {{ search_result }}
+                    {% if add_friend %}
+                        <form method="GET" action="/add_friend/{{ add_friend }}">
+                            <button type="submit">Відправити запит</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Список друзів -->
+        <div class="friends-list">
+            {% if friends_list %}
+                {% for friend in friends_list %}
+                <div class="friend-item">
+                    <img src="/static/avatars/default.png" alt="avatar"/>
+                    <span>{{ friend }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>У вас ще немає друзів</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Права панель -->
     <div class="side-panel">
         <div class="menu">
             <div class="menu-item">
@@ -108,39 +162,6 @@ body { margin: 0; background: #111; color: #fff; }
         </div>
     </div>
 
-    <!-- Основний контент -->
-    <div class="main-content">
-        <h1>Друзі</h1>
-
-        <div class="friend-search">
-            <form method="POST">
-                <input type="text" name="friend_name" placeholder="Знайти друга" required>
-                <button type="submit">Пошук</button>
-            </form>
-            {% if search_result %}
-                <div class="search-result">
-                    {{ search_result }}
-                    {% if add_friend %}
-                        <form method="GET" action="/add_friend/{{ add_friend }}">
-                            <button type="submit">Відправити запит</button>
-                        </form>
-                    {% endif %}
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="friend-list">
-            <h3>Ваші друзі:</h3>
-            <ul>
-            {% for friend in friends_list %}
-                <li>{{ friend }}</li>
-            {% else %}
-                <li>У вас ще немає друзів.</li>
-            {% endfor %}
-            </ul>
-        </div>
-    </div>
 </div>
-
 </body>
 </html>

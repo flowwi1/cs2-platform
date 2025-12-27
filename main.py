@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, session, send_from_directory
+from flask import Flask, render_template, redirect, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import sqlite3
@@ -36,7 +36,6 @@ def init_db():
         CREATE TABLE IF NOT EXISTS friends (
             user TEXT NOT NULL,
             friend TEXT NOT NULL,
-            status TEXT DEFAULT 'accepted',
             PRIMARY KEY(user, friend)
         )
     """)
@@ -123,9 +122,11 @@ def friends():
     db = get_db()
     cursor = db.cursor()
 
-    cursor.execute("SELECT friend FROM friends WHERE user = ? AND status = 'accepted'", (username,))
+    # Список друзів користувача
+    cursor.execute("SELECT friend FROM friends WHERE user = ?", (username,))
     friends_list = [row['friend'] for row in cursor.fetchall()]
 
+    # Пошук друзів
     if request.method == "POST":
         friend_name = request.form.get("friend_name")
         if friend_name == username:
@@ -134,8 +135,14 @@ def friends():
             cursor.execute("SELECT * FROM users WHERE username = ?", (friend_name,))
             friend = cursor.fetchone()
             if friend:
-                search_result = f"Знайдено користувача {friend_name}"
-                add_friend = friend_name
+                # Перевірка чи вже є у друзях
+                cursor.execute("SELECT * FROM friends WHERE user=? AND friend=?", (username, friend_name))
+                exists = cursor.fetchone()
+                if exists:
+                    search_result = f"{friend_name} вже у друзях"
+                else:
+                    search_result = f"Знайдено користувача {friend_name}"
+                    add_friend = friend_name
             else:
                 search_result = "Користувача не знайдено"
 
@@ -150,11 +157,13 @@ def add_friend(friend_name):
     username = session["user"]
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("SELECT * FROM friends WHERE user = ? AND friend = ?", (username, friend_name))
-    existing = cursor.fetchone()
-    if not existing:
-        cursor.execute("INSERT INTO friends (user, friend, status) VALUES (?, ?, 'accepted')", (username, friend_name))
-        cursor.execute("INSERT INTO friends (user, friend, status) VALUES (?, ?, 'accepted')", (friend_name, username))
+
+    # Додаємо тільки якщо ще не є друзями
+    cursor.execute("SELECT * FROM friends WHERE user=? AND friend=?", (username, friend_name))
+    exists = cursor.fetchone()
+    if not exists:
+        cursor.execute("INSERT INTO friends (user, friend) VALUES (?, ?)", (username, friend_name))
+        cursor.execute("INSERT INTO friends (user, friend) VALUES (?, ?)", (friend_name, username))
         db.commit()
     db.close()
     return redirect("/friends")
@@ -163,11 +172,6 @@ def add_friend(friend_name):
 def logout():
     session.clear()
     return redirect("/")
-
-# Статичні файли
-@app.route('/static/avatars/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
