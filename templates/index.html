@@ -1,15 +1,9 @@
 <!DOCTYPE html>
-<html lang="uk">
-<head>
-<meta charset="UTF-8">
-<title>Home - CS2 PLATFORM</title>
-</head>
+<html>
 <body>
-<h1>Привіт, {{ username }}!</h1>
+<h1>Hello {{ username }}</h1>
 <p>ELO: {{ elo }}</p>
-<img src="{{ avatar }}" width="80" height="80">
-<br>
-<a href="/profile">Профіль</a>
-<a href="/logout">Вихід</a>
+<img src="{{ avatar }}" width="80">
+<br><a href="/logout">Logout</a>
 </body>
 </html>
