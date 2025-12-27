@@ -10,8 +10,8 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 
 # ================= PATHS =================
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = "/data/database.db"   # 🔒 Render persistent disk
+DATA_DIR = "/data"
+DB_PATH = os.path.join(DATA_DIR, "database.db")
 
 # ================= DATABASE =================
 def get_db():
@@ -20,10 +20,11 @@ def get_db():
     return conn
 
 def init_db():
+    os.makedirs(DATA_DIR, exist_ok=True)
+
     db = get_db()
     c = db.cursor()
 
-    # -------- USERS --------
     c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
@@ -34,7 +35,6 @@ def init_db():
         )
     """)
 
-    # -------- FRIENDS --------
     c.execute("""
         CREATE TABLE IF NOT EXISTS friends (
             user TEXT,
@@ -51,7 +51,6 @@ def init_db():
         )
     """)
 
-    # -------- LOBBY --------
     c.execute("""
         CREATE TABLE IF NOT EXISTS lobbies (
             id TEXT PRIMARY KEY,
@@ -83,7 +82,10 @@ def init_db():
     db.commit()
     db.close()
 
-init_db()
+# 🔒 Ініціалізація БД ОДИН раз
+@app.before_first_request
+def startup():
+    init_db()
 
 # ================= HELPERS =================
 def update_last_seen(username):
@@ -108,23 +110,27 @@ def login():
         p = request.form["password"]
 
         db = get_db()
-        cur = db.cursor()
-        cur.execute("SELECT * FROM users WHERE username=?", (u,))
-        user = cur.fetchone()
+        user = db.execute(
+            "SELECT * FROM users WHERE username=?",
+            (u,)
+        ).fetchone()
 
         if not user:
-            cur.execute("""
-                INSERT INTO users (username, password, elo, avatar, last_seen)
-                VALUES (?, ?, 1000, '/static/avatars/default.png', ?)
+            db.execute("""
+                INSERT INTO users (username, password, last_seen)
+                VALUES (?, ?, ?)
             """, (u, generate_password_hash(p), int(time.time())))
             db.commit()
+            db.close()
             session["user"] = u
             return redirect("/home")
 
         if check_password_hash(user["password"], p):
+            db.close()
             session["user"] = u
             return redirect("/home")
 
+        db.close()
         return render_template("login.html", message="Невірний пароль")
 
     return render_template("login.html")
@@ -155,7 +161,6 @@ def home():
     )
 
 # ================= LOBBY =================
-
 @app.route("/lobby/create")
 def lobby_create():
     if "user" not in session:
@@ -165,13 +170,13 @@ def lobby_create():
     db = get_db()
 
     db.execute("""
-        INSERT INTO lobbies (id, leader, status, created_at)
-        VALUES (?, ?, 'waiting', ?)
+        INSERT INTO lobbies (id, leader, created_at)
+        VALUES (?, ?, ?)
     """, (lobby_id, session["user"], int(time.time())))
 
     db.execute("""
-        INSERT INTO lobby_members (lobby_id, username, ready)
-        VALUES (?, ?, 0)
+        INSERT INTO lobby_members (lobby_id, username)
+        VALUES (?, ?)
     """, (lobby_id, session["user"]))
 
     db.commit()
@@ -185,7 +190,6 @@ def lobby_view(lobby_id):
         return redirect("/")
 
     db = get_db()
-
     lobby = db.execute(
         "SELECT * FROM lobbies WHERE id=?",
         (lobby_id,)
@@ -196,8 +200,7 @@ def lobby_view(lobby_id):
         return redirect("/home")
 
     members = db.execute("""
-        SELECT username, ready
-        FROM lobby_members
+        SELECT username, ready FROM lobby_members
         WHERE lobby_id=?
     """, (lobby_id,)).fetchall()
 
@@ -223,7 +226,7 @@ def lobby_ready(lobby_id):
     db = get_db()
     db.execute("""
         UPDATE lobby_members
-        SET ready = CASE ready WHEN 1 THEN 0 ELSE 1 END
+        SET ready = 1 - ready
         WHERE lobby_id=? AND username=?
     """, (lobby_id, session["user"]))
     db.commit()
@@ -231,69 +234,7 @@ def lobby_ready(lobby_id):
 
     return redirect(f"/lobby/{lobby_id}")
 
-@app.route("/lobby/start/<lobby_id>")
-def lobby_start(lobby_id):
-    if "user" not in session:
-        return redirect("/")
-
-    db = get_db()
-
-    lobby = db.execute(
-        "SELECT * FROM lobbies WHERE id=?",
-        (lobby_id,)
-    ).fetchone()
-
-    if lobby["leader"] != session["user"]:
-        db.close()
-        return "ONLY LEADER", 403
-
-    not_ready = db.execute("""
-        SELECT 1 FROM lobby_members
-        WHERE lobby_id=? AND ready=0
-    """, (lobby_id,)).fetchone()
-
-    if not_ready:
-        db.close()
-        return "NOT ALL READY", 400
-
-    db.execute(
-        "UPDATE lobbies SET status='started' WHERE id=?",
-        (lobby_id,)
-    )
-    db.commit()
-    db.close()
-
-    return "MATCH STARTED 🔥"
-
 # ================= INVITES =================
-
-@app.route("/lobby/invite/<lobby_id>/<friend>")
-def lobby_invite(lobby_id, friend):
-    if "user" not in session:
-        return redirect("/")
-
-    db = get_db()
-
-    is_friend = db.execute("""
-        SELECT 1 FROM friends
-        WHERE user=? AND friend=?
-    """, (session["user"], friend)).fetchone()
-
-    if not is_friend:
-        db.close()
-        return "NOT YOUR FRIEND", 403
-
-    db.execute("""
-        INSERT OR IGNORE INTO lobby_invites
-        (lobby_id, sender, receiver, created_at)
-        VALUES (?, ?, ?, ?)
-    """, (lobby_id, session["user"], friend, int(time.time())))
-
-    db.commit()
-    db.close()
-
-    return redirect(f"/lobby/{lobby_id}")
-
 @app.route("/lobby/invites")
 def lobby_invites():
     if "user" not in session:
@@ -301,8 +242,7 @@ def lobby_invites():
 
     db = get_db()
     invites = db.execute("""
-        SELECT lobby_id, sender
-        FROM lobby_invites
+        SELECT lobby_id, sender FROM lobby_invites
         WHERE receiver=?
     """, (session["user"],)).fetchall()
     db.close()
@@ -323,7 +263,6 @@ def lobby_accept(lobby_id):
 
     db.execute("""
         INSERT OR IGNORE INTO lobby_members
-        (lobby_id, username, ready)
         VALUES (?, ?, 0)
     """, (lobby_id, session["user"]))
 

@@ -1,20 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="uk">
 <head>
-<meta charset="UTF-8">
-<title>Lobby Invites</title>
+    <meta charset="UTF-8">
+    <title>Lobby Invites</title>
 </head>
 <body>
+
 <h2>Запрошення в лобі</h2>
 
-{% for i in invites %}
-<div>
-    Lobby {{ i.lobby_id }} від {{ i.sender }}
-    <a href="/lobby/accept/{{ i.lobby_id }}">✅ Прийняти</a>
-</div>
+{% if invites %}
+    {% for i in invites %}
+        <div>
+            Lobby {{ i["lobby_id"] }} від {{ i["sender"] }}
+            <a href="/lobby/accept/{{ i['lobby_id'] }}">✅ Прийняти</a>
+        </div>
+    {% endfor %}
 {% else %}
-<p>Немає інвайтів</p>
-{% endfor %}
+    <p>Немає інвайтів</p>
+{% endif %}
+
+<a href="/home">← Назад</a>
 
 </body>
 </html>
