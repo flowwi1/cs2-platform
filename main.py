@@ -1,30 +1,30 @@
 from flask import Flask, render_template, redirect, request, session
 from werkzeug.security import generate_password_hash, check_password_hash
-from werkzeug.utils import secure_filename
 import sqlite3
 import os
 import time
+import uuid
 
+# ================= APP =================
 app = Flask(__name__)
-
-# ===== CONFIG =====
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
-DB_PATH = os.path.join("/tmp", "database.db")  # пізніше можна замінити на Render Persistent Disk
 
-UPLOAD_FOLDER = os.path.join("static", "avatars")
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# ================= PATHS =================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = "/data/database.db"   # 🔒 Render persistent disk
 
-# ===== DATABASE =====
+# ================= DATABASE =================
 def get_db():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("""
+    c = db.cursor()
+
+    # -------- USERS --------
+    c.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
             password TEXT NOT NULL,
@@ -33,81 +33,100 @@ def init_db():
             last_seen INTEGER
         )
     """)
-    cursor.execute("""
+
+    # -------- FRIENDS --------
+    c.execute("""
         CREATE TABLE IF NOT EXISTS friends (
-            user TEXT NOT NULL,
-            friend TEXT NOT NULL,
-            PRIMARY KEY(user, friend)
+            user TEXT,
+            friend TEXT,
+            PRIMARY KEY (user, friend)
         )
     """)
-    cursor.execute("""
+
+    c.execute("""
         CREATE TABLE IF NOT EXISTS friend_requests (
             sender TEXT,
             receiver TEXT,
-            PRIMARY KEY(sender, receiver)
+            PRIMARY KEY (sender, receiver)
         )
     """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS blocked (
-            blocker TEXT,
-            blocked TEXT,
-            PRIMARY KEY(blocker, blocked)
+
+    # -------- LOBBY --------
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS lobbies (
+            id TEXT PRIMARY KEY,
+            leader TEXT,
+            status TEXT DEFAULT 'waiting',
+            created_at INTEGER
         )
     """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS lobby_members (
+            lobby_id TEXT,
+            username TEXT,
+            ready INTEGER DEFAULT 0,
+            PRIMARY KEY (lobby_id, username)
+        )
+    """)
+
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS lobby_invites (
+            lobby_id TEXT,
+            sender TEXT,
+            receiver TEXT,
+            created_at INTEGER,
+            PRIMARY KEY (lobby_id, receiver)
+        )
+    """)
+
     db.commit()
     db.close()
 
 init_db()
 
-# ===== HELPERS =====
+# ================= HELPERS =================
 def update_last_seen(username):
     db = get_db()
-    c = db.cursor()
-    c.execute("UPDATE users SET last_seen=? WHERE username=?", (int(time.time()), username))
+    db.execute(
+        "UPDATE users SET last_seen=? WHERE username=?",
+        (int(time.time()), username)
+    )
     db.commit()
     db.close()
 
-def is_online(last_seen):
-    if not last_seen:
-        return False
-    return int(time.time()) - last_seen < 60  # 1 хвилина онлайн
-
 @app.before_request
-def ping():
+def before_request():
     if "user" in session:
         update_last_seen(session["user"])
 
-# ===== ROUTES =====
+# ================= AUTH =================
 @app.route("/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-        if not username or not password:
-            return render_template("login.html", message="Введіть логін і пароль")
+        u = request.form["username"]
+        p = request.form["password"]
 
         db = get_db()
-        cursor = db.cursor()
-        cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-        user = cursor.fetchone()
-        if user is None:
-            cursor.execute(
-                "INSERT INTO users (username, password, last_seen) VALUES (?, ?, ?)",
-                (username, generate_password_hash(password), int(time.time()))
-            )
+        cur = db.cursor()
+        cur.execute("SELECT * FROM users WHERE username=?", (u,))
+        user = cur.fetchone()
+
+        if not user:
+            cur.execute("""
+                INSERT INTO users (username, password, elo, avatar, last_seen)
+                VALUES (?, ?, 1000, '/static/avatars/default.png', ?)
+            """, (u, generate_password_hash(p), int(time.time())))
             db.commit()
-            session["user"] = username
-            db.close()
+            session["user"] = u
             return redirect("/home")
 
-        if check_password_hash(user["password"], password):
-            session["user"] = username
-            update_last_seen(username)
-            db.close()
+        if check_password_hash(user["password"], p):
+            session["user"] = u
             return redirect("/home")
 
-        db.close()
         return render_template("login.html", message="Невірний пароль")
+
     return render_template("login.html")
 
 @app.route("/logout")
@@ -115,164 +134,204 @@ def logout():
     session.clear()
     return redirect("/")
 
-# ===== HOME =====
+# ================= HOME =================
 @app.route("/home")
 def home():
     if "user" not in session:
         return redirect("/")
-    username = session["user"]
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT elo, avatar FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-    db.close()
-    return render_template("index.html", username=username, rank=user["elo"], avatar=user["avatar"])
 
-# ===== PROFILE =====
-@app.route("/profile/<username>", methods=["GET", "POST"])
-def profile(username):
+    db = get_db()
+    user = db.execute(
+        "SELECT * FROM users WHERE username=?",
+        (session["user"],)
+    ).fetchone()
+    db.close()
+
+    return render_template(
+        "index.html",
+        username=user["username"],
+        elo=user["elo"],
+        avatar=user["avatar"]
+    )
+
+# ================= LOBBY =================
+
+@app.route("/lobby/create")
+def lobby_create():
     if "user" not in session:
         return redirect("/")
+
+    lobby_id = str(uuid.uuid4())[:8]
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    user = cursor.fetchone()
-    if not user:
+
+    db.execute("""
+        INSERT INTO lobbies (id, leader, status, created_at)
+        VALUES (?, ?, 'waiting', ?)
+    """, (lobby_id, session["user"], int(time.time())))
+
+    db.execute("""
+        INSERT INTO lobby_members (lobby_id, username, ready)
+        VALUES (?, ?, 0)
+    """, (lobby_id, session["user"]))
+
+    db.commit()
+    db.close()
+
+    return redirect(f"/lobby/{lobby_id}")
+
+@app.route("/lobby/<lobby_id>")
+def lobby_view(lobby_id):
+    if "user" not in session:
+        return redirect("/")
+
+    db = get_db()
+
+    lobby = db.execute(
+        "SELECT * FROM lobbies WHERE id=?",
+        (lobby_id,)
+    ).fetchone()
+
+    if not lobby:
         db.close()
-        return "Користувача не знайдено", 404
+        return redirect("/home")
 
-    if request.method == "POST" and "avatar" in request.files:
-        file = request.files["avatar"]
-        if file.filename != "":
-            filename = secure_filename(f"{username}_{file.filename}")
-            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(filepath)
-            avatar_url = f"/static/avatars/{filename}"
-            cursor.execute("UPDATE users SET avatar = ? WHERE username = ?", (avatar_url, username))
-            db.commit()
-            return redirect(f"/profile/{username}")
+    members = db.execute("""
+        SELECT username, ready
+        FROM lobby_members
+        WHERE lobby_id=?
+    """, (lobby_id,)).fetchall()
 
-    db.close()
-    return render_template("profile.html", username=user["username"], rank=user["elo"], avatar=user["avatar"])
-
-# ===== FRIENDS =====
-@app.route("/friends", methods=["GET", "POST"])
-def friends():
-    if "user" not in session:
-        return redirect("/")
-    me = session["user"]
-    search_result = None
-    add_friend = None
-    db = get_db()
-    cursor = db.cursor()
-
-    # список друзів
-    cursor.execute("SELECT friend FROM friends WHERE user=?", (me,))
-    friends_list = []
-    for r in cursor.fetchall():
-        cursor.execute("SELECT last_seen FROM users WHERE username=?", (r["friend"],))
-        last_seen = cursor.fetchone()["last_seen"]
-        friends_list.append({"name": r["friend"], "online": is_online(last_seen)})
-
-    # запити
-    cursor.execute("SELECT sender FROM friend_requests WHERE receiver=?", (me,))
-    requests = [r["sender"] for r in cursor.fetchall()]
-
-    # пошук
-    if request.method == "POST":
-        friend_name = request.form.get("friend_name")
-        if friend_name == me:
-            search_result = "Це ти 😎"
-        else:
-            cursor.execute("SELECT * FROM users WHERE username=?", (friend_name,))
-            user = cursor.fetchone()
-            if not user:
-                search_result = "Користувача не знайдено"
-            else:
-                cursor.execute("SELECT * FROM blocked WHERE blocker=? AND blocked=?", (friend_name, me))
-                if cursor.fetchone():
-                    search_result = "Вас заблоковано цим користувачем"
-                else:
-                    cursor.execute("SELECT * FROM friends WHERE user=? AND friend=?", (me, friend_name))
-                    if cursor.fetchone():
-                        search_result = "Ви вже друзі"
-                    else:
-                        cursor.execute("SELECT * FROM friend_requests WHERE sender=? AND receiver=?", (me, friend_name))
-                        if cursor.fetchone():
-                            search_result = "Запит вже надіслано"
-                        else:
-                            search_result = f"Знайдено користувача {friend_name}"
-                            add_friend = friend_name
+    friends = db.execute("""
+        SELECT friend FROM friends WHERE user=?
+    """, (session["user"],)).fetchall()
 
     db.close()
-    return render_template("friends.html", username=me, friends_list=friends_list,
-                           requests=requests, search_result=search_result, add_friend=add_friend)
 
-@app.route("/add_friend/<friend_name>")
-def add_friend_route(friend_name):
+    return render_template(
+        "lobby.html",
+        lobby=lobby,
+        members=members,
+        friends=[f["friend"] for f in friends],
+        me=session["user"]
+    )
+
+@app.route("/lobby/ready/<lobby_id>")
+def lobby_ready(lobby_id):
     if "user" not in session:
         return redirect("/")
-    me = session["user"]
+
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("INSERT OR IGNORE INTO friend_requests VALUES (?, ?)", (me, friend_name))
+    db.execute("""
+        UPDATE lobby_members
+        SET ready = CASE ready WHEN 1 THEN 0 ELSE 1 END
+        WHERE lobby_id=? AND username=?
+    """, (lobby_id, session["user"]))
     db.commit()
     db.close()
-    return redirect("/friends")
 
-@app.route("/accept/<friend_name>")
-def accept(friend_name):
+    return redirect(f"/lobby/{lobby_id}")
+
+@app.route("/lobby/start/<lobby_id>")
+def lobby_start(lobby_id):
     if "user" not in session:
         return redirect("/")
-    me = session["user"]
+
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (friend_name, me))
-    cursor.execute("INSERT OR IGNORE INTO friends VALUES (?, ?)", (me, friend_name))
-    cursor.execute("INSERT OR IGNORE INTO friends VALUES (?, ?)", (friend_name, me))
+
+    lobby = db.execute(
+        "SELECT * FROM lobbies WHERE id=?",
+        (lobby_id,)
+    ).fetchone()
+
+    if lobby["leader"] != session["user"]:
+        db.close()
+        return "ONLY LEADER", 403
+
+    not_ready = db.execute("""
+        SELECT 1 FROM lobby_members
+        WHERE lobby_id=? AND ready=0
+    """, (lobby_id,)).fetchone()
+
+    if not_ready:
+        db.close()
+        return "NOT ALL READY", 400
+
+    db.execute(
+        "UPDATE lobbies SET status='started' WHERE id=?",
+        (lobby_id,)
+    )
     db.commit()
     db.close()
-    return redirect("/friends")
 
-@app.route("/decline/<friend_name>")
-def decline(friend_name):
+    return "MATCH STARTED 🔥"
+
+# ================= INVITES =================
+
+@app.route("/lobby/invite/<lobby_id>/<friend>")
+def lobby_invite(lobby_id, friend):
     if "user" not in session:
         return redirect("/")
-    me = session["user"]
+
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("DELETE FROM friend_requests WHERE sender=? AND receiver=?", (friend_name, me))
+
+    is_friend = db.execute("""
+        SELECT 1 FROM friends
+        WHERE user=? AND friend=?
+    """, (session["user"], friend)).fetchone()
+
+    if not is_friend:
+        db.close()
+        return "NOT YOUR FRIEND", 403
+
+    db.execute("""
+        INSERT OR IGNORE INTO lobby_invites
+        (lobby_id, sender, receiver, created_at)
+        VALUES (?, ?, ?, ?)
+    """, (lobby_id, session["user"], friend, int(time.time())))
+
     db.commit()
     db.close()
-    return redirect("/friends")
 
-@app.route("/remove_friend/<friend_name>")
-def remove_friend(friend_name):
+    return redirect(f"/lobby/{lobby_id}")
+
+@app.route("/lobby/invites")
+def lobby_invites():
     if "user" not in session:
         return redirect("/")
-    me = session["user"]
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("DELETE FROM friends WHERE user=? AND friend=?", (me, friend_name))
-    cursor.execute("DELETE FROM friends WHERE user=? AND friend=?", (friend_name, me))
-    db.commit()
-    db.close()
-    return redirect("/friends")
 
-@app.route("/block/<friend_name>")
-def block(friend_name):
+    db = get_db()
+    invites = db.execute("""
+        SELECT lobby_id, sender
+        FROM lobby_invites
+        WHERE receiver=?
+    """, (session["user"],)).fetchall()
+    db.close()
+
+    return render_template("lobby_invites.html", invites=invites)
+
+@app.route("/lobby/accept/<lobby_id>")
+def lobby_accept(lobby_id):
     if "user" not in session:
         return redirect("/")
-    me = session["user"]
+
     db = get_db()
-    cursor = db.cursor()
-    cursor.execute("INSERT OR IGNORE INTO blocked VALUES (?, ?)", (me, friend_name))
-    cursor.execute("DELETE FROM friends WHERE user=? AND friend=?", (me, friend_name))
-    cursor.execute("DELETE FROM friends WHERE user=? AND friend=?", (friend_name, me))
-    cursor.execute("DELETE FROM friend_requests WHERE sender=? OR receiver=?", (friend_name, me))
+
+    db.execute("""
+        DELETE FROM lobby_invites
+        WHERE lobby_id=? AND receiver=?
+    """, (lobby_id, session["user"]))
+
+    db.execute("""
+        INSERT OR IGNORE INTO lobby_members
+        (lobby_id, username, ready)
+        VALUES (?, ?, 0)
+    """, (lobby_id, session["user"]))
+
     db.commit()
     db.close()
-    return redirect("/friends")
 
+    return redirect(f"/lobby/{lobby_id}")
+
+# ================= RUN =================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

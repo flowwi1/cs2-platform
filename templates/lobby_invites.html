@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Lobby Invites</title>
+</head>
+<body>
+<h2>Запрошення в лобі</h2>
+
+{% for i in invites %}
+<div>
+    Lobby {{ i.lobby_id }} від {{ i.sender }}
+    <a href="/lobby/accept/{{ i.lobby_id }}">✅ Прийняти</a>
+</div>
+{% else %}
+<p>Немає інвайтів</p>
+{% endfor %}
+
+</body>
+</html>
