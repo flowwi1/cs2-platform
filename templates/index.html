@@ -6,11 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
 * { box-sizing: border-box; font-family: "Segoe UI", system-ui, sans-serif; }
-body { margin: 0; background: #111; color: #fff; }
+body { margin: 0; background: #0d0d0d; color: #fff; }
 
+/* Контейнер */
 .container { display: flex; min-height: 100vh; }
 
-/* Ліва частина */
+/* Центральна частина */
 .main-content {
     flex: 1;
     display: flex;
@@ -22,31 +23,67 @@ body { margin: 0; background: #111; color: #fff; }
 }
 
 .main-content h1 {
-    font-size: 48px;
-    color: #ff6a00;
+    font-size: 50px;
+    background: linear-gradient(90deg, #ff6a00, #ff4500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin: 0;
 }
 
 .main-content p {
     margin-top: 20px;
-    font-size: 18px;
-    color: #ccc;
+    font-size: 20px;
+    color: #aaa;
 }
 
-/* Права панель */
+/* Бокова панель */
 .side-panel {
-    width: 60px;
-    background: #1a1a1a;
+    width: 70px;
+    background: #111;
     position: relative;
     transition: width 0.3s ease;
     overflow: hidden;
+    box-shadow: -3px 0 10px rgba(0,0,0,0.5);
 }
 
 .side-panel:hover { width: 280px; }
 
 .side-panel .menu { display: flex; flex-direction: column; padding: 20px 10px; }
 
-.side-panel .menu-item {
+/* Кнопка профілю зверху */
+.profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 20px;
+    background: #222;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.profile-btn:hover { background: #ff6a00; }
+
+.profile-btn img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #ff6a00;
+}
+
+.profile-btn span {
+    white-space: nowrap;
+    opacity: 0;
+    font-weight: bold;
+    transition: opacity 0.3s ease;
+    color: #fff;
+}
+
+.side-panel:hover .profile-btn span { opacity: 1; }
+
+/* Кнопки меню */
+.menu-item {
     display: flex;
     align-items: center;
     gap: 15px;
@@ -56,26 +93,24 @@ body { margin: 0; background: #111; color: #fff; }
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
-    color: #ff6a00; /* помаранчевий для контрасту */
+    color: #fff;
     font-weight: bold;
 }
 
-.side-panel .menu-item:hover {
+.menu-item:hover {
     background: #ff6a00;
     color: #111;
 }
 
-.side-panel .menu-item span {
+.menu-item span {
     white-space: nowrap;
     opacity: 0;
-    transition: opacity 0.3s ease, color 0.3s ease;
-    color: #ff6a00;
+    transition: opacity 0.3s ease;
 }
 
 .side-panel:hover .menu-item span { opacity: 1; }
 
 .menu-item img { width: 24px; height: 24px; }
-
 .menu-item a { text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%; }
 
 </style>
@@ -83,39 +118,42 @@ body { margin: 0; background: #111; color: #fff; }
 <body>
 
 <div class="container">
-    <!-- Ліва частина -->
+    <!-- Центральна частина -->
     <div class="main-content">
         <h1>Ласкаво просимо на CS2 Platform!</h1>
-        <p>Виберіть функцію з правої панелі</p>
+        <p>Виберіть функцію з бокової панелі</p>
     </div>
 
-    <!-- Права панель -->
+    <!-- Бокова панель -->
     <div class="side-panel">
         <div class="menu">
+            <!-- Верхня кнопка профілю -->
+            <div class="profile-btn">
+                <a href="/profile/{{ username }}">
+                    <img src="{{ avatar }}" alt="Аватар">
+                    <span>{{ username }}</span>
+                </a>
+            </div>
+
+            <!-- Меню -->
             <div class="menu-item">
                 <a href="/home">
-                    <img src="https://img.icons8.com/ios-filled/24/ff6a00/home.png"/>
+                    <img src="https://img.icons8.com/ios-filled/24/ffffff/home.png"/>
                     <span>Головна</span>
                 </a>
             </div>
             <div class="menu-item">
-                <a href="/profile/{{ username }}">
-                    <img src="https://img.icons8.com/ios-filled/24/ff6a00/user.png"/>
-                    <span>Профіль</span>
-                </a>
-            </div>
-            <div class="menu-item">
                 <a href="/friends">
-                    <img src="https://img.icons8.com/ios-filled/24/ff6a00/user-group-man-man.png"/>
+                    <img src="https://img.icons8.com/ios-filled/24/ffffff/user-group-man-man.png"/>
                     <span>Друзі</span>
                 </a>
             </div>
             <div class="menu-item">
-                <img src="https://img.icons8.com/ios-filled/24/ff6a00/controller.png"/>
+                <img src="https://img.icons8.com/ios-filled/24/ffffff/controller.png"/>
                 <span>Грати</span>
             </div>
             <div class="menu-item">
-                <img src="https://img.icons8.com/ios-filled/24/ff6a00/team.png"/>
+                <img src="https://img.icons8.com/ios-filled/24/ffffff/team.png"/>
                 <span>Команди</span>
             </div>
         </div>
