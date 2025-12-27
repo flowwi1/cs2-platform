@@ -1,6 +1,46 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>Профіль: {{ username }}</h1>
-<p>Ранг: {{ rank }}</p>
-<img src="{{ avatar }}" alt="Аватар" width="100" style="border-radius:10px; margin-top:10px;">
-{% endblock %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Профіль {{ username }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { background: #111; color: #fff; font-family: "Segoe UI", sans-serif; margin:0; padding:0; }
+.container { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; }
+.profile-box { background:#1a1a1a; padding:20px; border-radius:12px; text-align:center; width:300px; }
+.profile-box img { border-radius:50%; width:120px; height:120px; margin-bottom:15px; }
+.profile-box h2 { margin:10px 0; }
+input[type=file] { margin-top:10px; }
+button { margin-top:10px; padding:10px 20px; border:none; border-radius:8px; background:#ff6a00; color:#111; font-weight:bold; cursor:pointer; }
+button:hover { background:#ff4500; }
+.flash-message { color:#0f0; margin-top:10px; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="profile-box">
+        <img src="{{ avatar }}" alt="Avatar">
+        <h2>{{ username }}</h2>
+        <p>Ранг: {{ rank }}</p>
+
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="avatar" accept=".png,.jpg,.jpeg,.gif" required>
+            <button type="submit">Змінити аватар</button>
+        </form>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="flash-message">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <a href="/home"><button>Головна</button></a>
+        <a href="/logout"><button>Вихід</button></a>
+    </div>
+</div>
+</body>
+</html>
