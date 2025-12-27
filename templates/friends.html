@@ -1,24 +1,39 @@
 {% extends "base.html" %}
-
 {% block content %}
 <h1>Ваші друзі</h1>
 
-<h2>Прийняті друзі</h2>
-<ul>
+<!-- Пошук -->
+<div class="friend-search">
+    <form method="POST">
+        <input type="text" name="friend_name" placeholder="Знайти друга" required/>
+        <button type="submit">Пошук</button>
+    </form>
+    {% if search_result %}
+        <div class="search-result">
+            {{ search_result }}
+            {% if add_friend %}
+            <form method="GET" action="/add_friend/{{ add_friend }}">
+                <button type="submit">Відправити запит</button>
+            </form>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<!-- Друзі -->
+<ul style="margin-top:20px;">
 {% for f in friends %}
-<li>
-    {{ f['sender'] if f['sender'] != username else f['receiver'] }}
-</li>
+<li>{{ f['sender'] if f['sender'] != username else f['receiver'] }}</li>
 {% else %}
 <p>Немає друзів</p>
 {% endfor %}
 </ul>
 
+<!-- Запити -->
 <h2>Запити в очікуванні</h2>
 <ul>
 {% for r in requests %}
-<li>
-    {{ r['sender'] }}
+<li>{{ r['sender'] }}
     <a href="/accept_friend/{{ r['id'] }}"><button>Прийняти</button></a>
 </li>
 {% else %}

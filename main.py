@@ -89,38 +89,54 @@ def profile(username):
         return "Користувача не знайдено", 404
     return render_template("profile.html", username=user["username"], rank=user["elo"], avatar=user["avatar"])
 
-@app.route("/friends")
+@app.route("/friends", methods=["GET", "POST"])
 def friends():
     if "user" not in session:
         return redirect("/")
     username = session["user"]
     db = get_db()
     cursor = db.cursor()
-    # Прийняті друзі
+
+    search_result = None
+    add_friend = None
+
+    # Пошук друга
+    if request.method == "POST":
+        friend_name = request.form.get("friend_name")
+        if friend_name == username:
+            search_result = "Це ти 😎"
+        else:
+            cursor.execute("SELECT * FROM users WHERE username = ?", (friend_name,))
+            user = cursor.fetchone()
+            if user:
+                # Перевірка, чи вже є дружба
+                cursor.execute("SELECT * FROM friends WHERE (sender=? AND receiver=?) OR (sender=? AND receiver=?)", 
+                               (username, friend_name, friend_name, username))
+                existing = cursor.fetchone()
+                if existing:
+                    search_result = "Запит вже відправлено або ви вже друзі"
+                else:
+                    search_result = f"Користувача знайдено: {friend_name}"
+                    add_friend = friend_name
+            else:
+                search_result = "Користувача не знайдено"
+
+    # Всі друзі
     cursor.execute("""
-        SELECT * FROM friends WHERE (sender = ? OR receiver = ?) AND accepted = 1
+        SELECT sender, receiver FROM friends 
+        WHERE (sender=? OR receiver=?) AND accepted=1
     """, (username, username))
     friends_list = cursor.fetchall()
-    # Запити в очікуванні
-    cursor.execute("SELECT * FROM friends WHERE receiver = ? AND accepted = 0", (username,))
-    requests_list = cursor.fetchall()
-    db.close()
-    return render_template("friends.html", username=username, friends=friends_list, requests=requests_list)
 
-@app.route("/search_friend", methods=["POST"])
-def search_friend():
-    if "user" not in session:
-        return redirect("/")
-    friend_name = request.form.get("friend_name")
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute("SELECT * FROM users WHERE username = ?", (friend_name,))
-    user = cursor.fetchone()
+    # Запити в очікуванні
+    cursor.execute("""
+        SELECT * FROM friends WHERE receiver=? AND accepted=0
+    """, (username,))
+    requests_list = cursor.fetchall()
+
     db.close()
-    if user:
-        return render_template("base.html", username=session["user"], search_result="Користувача знайдено", add_friend=friend_name)
-    else:
-        return render_template("base.html", username=session["user"], search_result="Користувача не знайдено")
+    return render_template("friends.html", username=username, friends=friends_list, requests=requests_list,
+                           search_result=search_result, add_friend=add_friend)
 
 @app.route("/add_friend/<friend_name>")
 def add_friend(friend_name):
@@ -129,12 +145,8 @@ def add_friend(friend_name):
     sender = session["user"]
     db = get_db()
     cursor = db.cursor()
-    # Перевіряємо, чи не існує запит
-    cursor.execute("SELECT * FROM friends WHERE sender=? AND receiver=?", (sender, friend_name))
-    exists = cursor.fetchone()
-    if not exists:
-        cursor.execute("INSERT INTO friends (sender, receiver) VALUES (?, ?)", (sender, friend_name))
-        db.commit()
+    cursor.execute("INSERT INTO friends (sender, receiver) VALUES (?, ?)", (sender, friend_name))
+    db.commit()
     db.close()
     return redirect("/friends")
 
@@ -144,7 +156,7 @@ def accept_friend(request_id):
         return redirect("/")
     db = get_db()
     cursor = db.cursor()
-    cursor.execute("UPDATE friends SET accepted = 1 WHERE id = ?", (request_id,))
+    cursor.execute("UPDATE friends SET accepted=1 WHERE id=?", (request_id,))
     db.commit()
     db.close()
     return redirect("/friends")

@@ -14,6 +14,7 @@ body { margin: 0; background: #111; color: #fff; }
 .main-content {
     flex: 1;
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
@@ -24,6 +25,12 @@ body { margin: 0; background: #111; color: #fff; }
     font-size: 48px;
     color: #ff6a00;
     margin: 0;
+}
+
+.main-content p {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #ccc;
 }
 
 /* Права панель */
@@ -71,34 +78,6 @@ body { margin: 0; background: #111; color: #fff; }
 
 .menu-item a { text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%; }
 
-/* Пошук друзів */
-.friend-search {
-    margin-top: 20px;
-}
-
-.friend-search input {
-    width: 100%;
-    padding: 8px 10px;
-    border-radius: 6px;
-    border: none;
-    margin-bottom: 8px;
-    font-size: 14px;
-}
-
-.friend-search button {
-    width: 100%;
-    padding: 8px;
-    border: none;
-    border-radius: 6px;
-    background: #ff6a00;
-    color: #111;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.friend-search button:hover { background: #ff4500; }
-
-.search-result { margin-top: 8px; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -107,11 +86,18 @@ body { margin: 0; background: #111; color: #fff; }
     <!-- Ліва частина -->
     <div class="main-content">
         <h1>Ласкаво просимо на CS2 Platform!</h1>
+        <p>Виберіть функцію з правої панелі</p>
     </div>
 
     <!-- Права панель -->
     <div class="side-panel">
         <div class="menu">
+            <div class="menu-item">
+                <a href="/home">
+                    <img src="https://img.icons8.com/ios-filled/24/ff6a00/home.png"/>
+                    <span>Головна</span>
+                </a>
+            </div>
             <div class="menu-item">
                 <a href="/profile/{{ username }}">
                     <img src="https://img.icons8.com/ios-filled/24/ff6a00/user.png"/>
@@ -132,25 +118,6 @@ body { margin: 0; background: #111; color: #fff; }
                 <img src="https://img.icons8.com/ios-filled/24/ff6a00/team.png"/>
                 <span>Команди</span>
             </div>
-
-            <!-- Пошук друзів -->
-            <div class="friend-search">
-                <form method="POST" action="/search_friend">
-                    <input type="text" name="friend_name" placeholder="Знайти друга" required/>
-                    <button type="submit">Пошук</button>
-                </form>
-                {% if search_result %}
-                <div class="search-result">
-                    {{ search_result }}
-                    {% if add_friend %}
-                        <form method="GET" action="/add_friend/{{ add_friend }}">
-                            <button type="submit">Відправити запит</button>
-                        </form>
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
-
         </div>
     </div>
 </div>
