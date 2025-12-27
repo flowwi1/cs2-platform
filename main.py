@@ -83,7 +83,25 @@ def home():
     return render_template(
         "index.html",
         username=username,
-        elo=user["elo"],
+        rank=user["elo"],  # передаємо як rank для нових шаблонів
+        avatar=user["avatar"]
+    )
+
+@app.route("/profile/<username>")
+def profile(username):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
+    user = cursor.fetchone()
+    db.close()
+
+    if not user:
+        return "Користувача не знайдено", 404
+
+    return render_template(
+        "profile.html",
+        username=user["username"],
+        rank=user["elo"],  # можна замінити на інше поле, якщо потрібно
         avatar=user["avatar"]
     )
 

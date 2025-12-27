@@ -58,13 +58,14 @@
         }
 
         .side-panel .menu-item:hover {
-            background: #ff7f32; /* трохи світліше при наведенні */
+            background: #fff; /* світліша при наведенні */
+            color: #111;
         }
 
         .side-panel .menu-item span {
             white-space: nowrap;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, color 0.3s ease;
         }
 
         .side-panel:hover .menu-item span {
@@ -77,6 +78,13 @@
             height: 24px;
         }
 
+        .menu-item a {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -91,16 +99,18 @@
     <div class="side-panel">
         <div class="menu">
             <div class="menu-item">
-                <img src="https://img.icons8.com/ios-filled/24/ffffff/user.png"/>
-                <span>Профіль</span>
+                <a href="/profile/{{ username }}">
+                    <img src="https://img.icons8.com/ios-filled/24/ffffff/user.png"/>
+                    <span>Профіль</span>
+                </a>
             </div>
             <div class="menu-item">
                 <img src="https://img.icons8.com/ios-filled/24/ffffff/user-group-man-man.png"/>
                 <span>Друзі</span>
             </div>
             <div class="menu-item">
-                <img src="https://img.icons8.com/ios-filled/24/ffffff/add-user-male.png"/>
-                <span>Запроси друзів</span>
+                <img src="https://img.icons8.com/ios-filled/24/ffffff/controller.png"/>
+                <span>Грати</span>
             </div>
             <div class="menu-item">
                 <img src="https://img.icons8.com/ios-filled/24/ffffff/team.png"/>
