@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>{{ title or "CS2 Platform" }}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* { box-sizing: border-box; font-family: "Segoe UI", system-ui, sans-serif; margin:0; padding:0; }
+body { background: #111; color: #fff; display: flex; min-height: 100vh; }
+
+.container { display: flex; width: 100%; }
+
+/* Панель завжди на місці */
+.side-panel {
+    width: 60px;
+    background: #1a1a1a;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    transition: width 0.3s ease;
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.side-panel:hover { width: 280px; }
+
+.side-panel .menu { display: flex; flex-direction: column; padding: 20px 10px; }
+
+.side-panel .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #222;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #ff6a00;
+    font-weight: bold;
+}
+
+.side-panel .menu-item:hover { background: #ff6a00; color: #111; }
+
+.side-panel .menu-item span {
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.3s ease, color 0.3s ease;
+    color: #ff6a00;
+}
+
+.side-panel:hover .menu-item span { opacity: 1; }
+
+.menu-item img { width: 24px; height: 24px; }
+
+.menu-item a { text-decoration: none; color: inherit; display: flex; align-items: center; width: 100%; }
+
+/* Основна частина */
+.main-content {
+    flex: 1;
+    margin-left: 60px;
+    padding: 40px;
+    transition: margin-left 0.3s;
+}
+
+.side-panel:hover ~ .main-content { margin-left: 280px; }
+
+/* Пошук друзів */
+.friend-search {
+    margin-top: 20px;
+}
+
+.friend-search input {
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: none;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.friend-search button {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    background: #ff6a00;
+    color: #111;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.friend-search button:hover { background: #ff4500; }
+
+.search-result { margin-top: 8px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="side-panel">
+    <div class="menu">
+        <div class="menu-item">
+            <a href="/home">
+                <img src="https://img.icons8.com/ios-filled/24/ff6a00/home.png"/>
+                <span>Головна</span>
+            </a>
+        </div>
+        <div class="menu-item">
+            <a href="/profile/{{ username }}">
+                <img src="https://img.icons8.com/ios-filled/24/ff6a00/user.png"/>
+                <span>Профіль</span>
+            </a>
+        </div>
+        <div class="menu-item">
+            <a href="/friends">
+                <img src="https://img.icons8.com/ios-filled/24/ff6a00/user-group-man-man.png"/>
+                <span>Друзі</span>
+            </a>
+        </div>
+        <div class="menu-item">
+            <img src="https://img.icons8.com/ios-filled/24/ff6a00/controller.png"/>
+            <span>Грати</span>
+        </div>
+        <div class="menu-item">
+            <img src="https://img.icons8.com/ios-filled/24/ff6a00/team.png"/>
+            <span>Команди</span>
+        </div>
+
+        <!-- Пошук друзів -->
+        <div class="friend-search">
+            <form method="POST" action="/search_friend">
+                <input type="text" name="friend_name" placeholder="Знайти друга" required/>
+                <button type="submit">Пошук</button>
+            </form>
+            {% if search_result %}
+            <div class="search-result">
+                {{ search_result }}
+                {% if add_friend %}
+                    <form method="GET" action="/add_friend/{{ add_friend }}">
+                        <button type="submit">Відправити запит</button>
+                    </form>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    {% block content %}{% endblock %}
+</div>
+
+</body>
+</html>
