@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>Друзі</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: "Segoe UI", system-ui, sans-serif; background:#111; color:#fff; margin:0; padding:20px; }
+h1 { color:#ff6a00; }
+.friend, .request { background:#222; padding:12px; margin:10px 0; border-radius:8px; display:flex; justify-content:space-between; align-items:center; }
+button { background:#ff6a00; color:#111; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; }
+button:hover { background:#ff4500; }
+</style>
+</head>
+<body>
+<h1>Мої друзі</h1>
+
+<h2>Запити на дружбу</h2>
+{% for req in requests %}
+<div class="request">
+    <span>{{ req.sender }}</span>
+    <a href="/accept_friend/{{ req.id }}"><button>Прийняти</button></a>
+</div>
+{% else %}
+<p>Немає нових запитів</p>
+{% endfor %}
+
+<h2>Список друзів</h2>
+{% for f in friends %}
+<div class="friend">
+    {% if f.sender == session.user %}
+        <span>{{ f.receiver }}</span>
+    {% else %}
+        <span>{{ f.sender }}</span>
+    {% endif %}
+</div>
+{% else %}
+<p>У вас ще немає друзів</p>
+{% endfor %}
+</body>
+</html>

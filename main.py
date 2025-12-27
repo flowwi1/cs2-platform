@@ -18,12 +18,23 @@ def get_db():
 def init_db():
     db = get_db()
     cursor = db.cursor()
+    # Таблиця користувачів
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
             password TEXT NOT NULL,
             elo INTEGER DEFAULT 1000,
             avatar TEXT DEFAULT 'https://via.placeholder.com/80'
+        )
+    """)
+    # Таблиця дружби
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS friends (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT NOT NULL,
+            receiver TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',  -- pending, accepted
+            UNIQUE(sender, receiver)
         )
     """)
     db.commit()
@@ -83,7 +94,7 @@ def home():
     return render_template(
         "index.html",
         username=username,
-        rank=user["elo"],  # передаємо як rank для нових шаблонів
+        rank=user["elo"],
         avatar=user["avatar"]
     )
 
@@ -101,10 +112,58 @@ def profile(username):
     return render_template(
         "profile.html",
         username=user["username"],
-        rank=user["elo"],  # можна замінити на інше поле, якщо потрібно
+        rank=user["elo"],
         avatar=user["avatar"]
     )
 
+# ===== Система друзів =====
+@app.route("/add_friend/<receiver>")
+def add_friend(receiver):
+    if "user" not in session:
+        return redirect("/")
+    sender = session["user"]
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("SELECT * FROM friends WHERE sender=? AND receiver=?", (sender, receiver))
+    if cursor.fetchone() is None and sender != receiver:
+        cursor.execute("INSERT INTO friends (sender, receiver) VALUES (?, ?)", (sender, receiver))
+        db.commit()
+    db.close()
+    return redirect("/friends")
+
+@app.route("/accept_friend/<int:friend_id>")
+def accept_friend(friend_id):
+    if "user" not in session:
+        return redirect("/")
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute("UPDATE friends SET status='accepted' WHERE id=? AND receiver=?", (friend_id, session["user"]))
+    db.commit()
+    db.close()
+    return redirect("/friends")
+
+@app.route("/friends")
+def friends():
+    if "user" not in session:
+        return redirect("/")
+    username = session["user"]
+    db = get_db()
+    cursor = db.cursor()
+    # Друзі
+    cursor.execute("""
+        SELECT * FROM friends WHERE 
+        (sender=? OR receiver=?) AND status='accepted'
+    """, (username, username))
+    friends_list = cursor.fetchall()
+    # Запити
+    cursor.execute("""
+        SELECT * FROM friends WHERE receiver=? AND status='pending'
+    """, (username,))
+    requests = cursor.fetchall()
+    db.close()
+    return render_template("friends.html", friends=friends_list, requests=requests)
+
+# ===== Вихід =====
 @app.route("/logout")
 def logout():
     session.clear()
